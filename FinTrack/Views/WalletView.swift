@@ -95,7 +95,7 @@ struct WalletView: View {
                                 Image(systemName: "person.crop.circle.badge.plus")
                                     .font(.title3)
                                     .foregroundColor(.gray)
-                                Text("Añade cuentas como la de tu novia o familia para reconocerlas en el SMS.")
+                                Text("Registra cuentas de destino frecuentes para asociar el nombre del contacto automáticamente.")
                                     .font(.caption)
                                     .foregroundColor(.gray)
                             }
@@ -495,7 +495,7 @@ struct AddAliasView: View {
                     header: Text("Información del Destinatario"),
                     footer: Text("💡 Cuando te llegue un SMS con este número de cuenta, FinTrack reemplazará los dígitos por el nombre de la persona automáticamente.")
                 ) {
-                    TextField("Nombre de la persona (ej. Valentina)", text: $contactName)
+                    TextField("Nombre del contacto (ej. Mamá, Arriendo)", text: $contactName)
                     TextField("Número de cuenta o últimos 4 dígitos", text: $accountNumber)
                         .keyboardType(.numberPad)
                         .onChange(of: accountNumber) { _, v in
