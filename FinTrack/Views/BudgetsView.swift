@@ -23,11 +23,10 @@ struct BudgetsView: View {
     @State private var showEditBudgetSheet = false
     @State private var newBudgetInput: String = ""
     
-    // Metas de ahorro dinámicas guardadas en el teléfono
+    // Metas de ahorro dinámicas guardadas en el teléfono (100% limpias sin dummies)
     @State private var goals: [SavingsGoal] = []
     @State private var showAddGoalSheet = false
     @State private var selectedGoalForDeposit: SavingsGoal? = nil
-    @State private var depositAmountInput: String = ""
     
     let categoryMeta: [String: (icon: String, color: Color)] = [
         "Comida": ("fork.knife", .orange),
@@ -85,7 +84,7 @@ struct BudgetsView: View {
                             }
                             Spacer()
                             Button(action: {
-                                newBudgetInput = String(format: "%.0f", monthlyBudgetLimit)
+                                newBudgetInput = formatAsCurrency(String(format: "%.0f", monthlyBudgetLimit))
                                 showEditBudgetSheet = true
                             }) {
                                 HStack(spacing: 4) {
@@ -214,7 +213,7 @@ struct BudgetsView: View {
                         }
                     }
                     
-                    // 3. SECCIÓN DE METAS DE AHORRO DINÁMICAS
+                    // 3. SECCIÓN DE METAS DE AHORRO (LIMPIA)
                     VStack(alignment: .leading, spacing: 14) {
                         HStack {
                             Text("Metas de Ahorro")
@@ -242,15 +241,16 @@ struct BudgetsView: View {
                                     .foregroundColor(.gray.opacity(0.6))
                                 Text("Aún no tienes metas creadas.")
                                     .font(.subheadline)
+                                    .bold()
                                     .foregroundColor(.gray)
-                                Text("Toca '+ Nueva Meta' para planear tus próximas vacaciones, compras o fondo de emergencia.")
+                                Text("Toca '+ Nueva Meta' para definir un objetivo real de ahorro con su monto objetivo.")
                                     .font(.caption)
                                     .foregroundColor(.gray.opacity(0.8))
                                     .multilineTextAlignment(.center)
-                                    .padding(.horizontal, 20)
+                                    .padding(.horizontal, 24)
                             }
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 24)
+                            .padding(.vertical, 28)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
                                     .fill(Color(UIColor.systemBackground))
@@ -263,7 +263,6 @@ struct BudgetsView: View {
                                         goal: goal,
                                         onDeposit: {
                                             selectedGoalForDeposit = goal
-                                            depositAmountInput = ""
                                         },
                                         onDelete: {
                                             deleteGoal(goal)
@@ -287,13 +286,19 @@ struct BudgetsView: View {
                 loadGoals()
                 await viewModel.fetchTransactions()
             }
-            // Sheet de ajustar presupuesto
+            // Sheet de ajustar presupuesto con formateo en tiempo real
             .sheet(isPresented: $showEditBudgetSheet) {
                 NavigationView {
                     Form {
                         Section(header: Text("Límite Mensual de Gastos"), footer: Text("Define cuánto quieres gastar como máximo por mes para mantener tus finanzas bajo control.")) {
-                            TextField("Ej. 2000000", text: $newBudgetInput)
-                                .keyboardType(.numberPad)
+                            HStack {
+                                Text("$").foregroundColor(.gray)
+                                TextField("0", text: $newBudgetInput)
+                                    .keyboardType(.numberPad)
+                                    .onChange(of: newBudgetInput) { _, v in
+                                        newBudgetInput = formatAsCurrency(v)
+                                    }
+                            }
                         }
                         
                         Button(action: {
@@ -313,14 +318,14 @@ struct BudgetsView: View {
                     .navigationBarItems(trailing: Button("Cancelar") { showEditBudgetSheet = false })
                 }
             }
-            // Sheet para crear nueva meta
+            // Sheet para crear nueva meta con formateo en tiempo real
             .sheet(isPresented: $showAddGoalSheet) {
                 CreateGoalView { newGoal in
                     goals.append(newGoal)
                     saveGoals()
                 }
             }
-            // Sheet para abonar dinero a una meta
+            // Sheet para abonar dinero con formateo en tiempo real
             .sheet(item: $selectedGoalForDeposit) { goal in
                 DepositGoalView(goal: goal) { amountToAdd in
                     if let index = goals.firstIndex(where: { $0.id == goal.id }) {
@@ -361,18 +366,14 @@ struct BudgetsView: View {
         return "Otros"
     }
     
-    // MARK: - Persistencia local de Metas
+    // MARK: - Persistencia 100% Limpia (Sin dummies)
     private func loadGoals() {
         if let data = UserDefaults.standard.data(forKey: "user_savings_goals"),
            let decoded = try? JSONDecoder().decode([SavingsGoal].self, from: data) {
-            self.goals = decoded
+            // Filtramos cualquier dato dummy viejo de prueba
+            self.goals = decoded.filter { $0.title != "Fondo de Emergencia" && $0.title != "Vacaciones" }
         } else {
-            // Metas iniciales predeterminadas si está vacío por primera vez
-            self.goals = [
-                SavingsGoal(title: "Fondo de Emergencia", icon: "shield.fill", colorName: "green", currentAmount: 500000, targetAmount: 2000000),
-                SavingsGoal(title: "Vacaciones", icon: "airplane.departure", colorName: "cyan", currentAmount: 300000, targetAmount: 1500000)
-            ]
-            saveGoals()
+            self.goals = []
         }
     }
     
@@ -387,6 +388,16 @@ struct BudgetsView: View {
             goals.removeAll { $0.id == goal.id }
             saveGoals()
         }
+    }
+    
+    private func formatAsCurrency(_ value: String) -> String {
+        let filtered = value.filter { "0123456789".contains($0) }
+        if let intValue = Int(filtered) {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            return formatter.string(from: NSNumber(value: intValue)) ?? ""
+        }
+        return ""
     }
 }
 
@@ -485,7 +496,7 @@ struct InteractiveGoalCard: View {
     }
 }
 
-// Modal para crear una nueva meta
+// Modal para crear una nueva meta con formateo en tiempo real
 struct CreateGoalView: View {
     @Environment(\.presentationMode) var presentationMode
     @State private var title: String = ""
@@ -507,10 +518,23 @@ struct CreateGoalView: View {
                 }
                 
                 Section(header: Text("Montos")) {
-                    TextField("Monto Objetivo (¿Cuánto necesitas?)", text: $targetInput)
-                        .keyboardType(.numberPad)
-                    TextField("Ahorro Inicial (opcional)", text: $initialInput)
-                        .keyboardType(.numberPad)
+                    HStack {
+                        Text("$").foregroundColor(.gray)
+                        TextField("Monto Objetivo (¿Cuánto necesitas?)", text: $targetInput)
+                            .keyboardType(.numberPad)
+                            .onChange(of: targetInput) { _, v in
+                                targetInput = formatAsCurrency(v)
+                            }
+                    }
+                    
+                    HStack {
+                        Text("$").foregroundColor(.gray)
+                        TextField("Ahorro Inicial (opcional)", text: $initialInput)
+                            .keyboardType(.numberPad)
+                            .onChange(of: initialInput) { _, v in
+                                initialInput = formatAsCurrency(v)
+                            }
+                    }
                 }
                 
                 Section(header: Text("Personalización")) {
@@ -558,9 +582,19 @@ struct CreateGoalView: View {
             .navigationBarItems(trailing: Button("Cancelar") { presentationMode.wrappedValue.dismiss() })
         }
     }
+    
+    private func formatAsCurrency(_ value: String) -> String {
+        let filtered = value.filter { "0123456789".contains($0) }
+        if let intValue = Int(filtered) {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            return formatter.string(from: NSNumber(value: intValue)) ?? ""
+        }
+        return ""
+    }
 }
 
-// Modal para abonar a una meta
+// Modal para abonar a una meta con formateo en tiempo real
 struct DepositGoalView: View {
     @Environment(\.presentationMode) var presentationMode
     let goal: SavingsGoal
@@ -573,8 +607,11 @@ struct DepositGoalView: View {
                 Section(header: Text("Meta: \(goal.title)"), footer: Text("Este monto se sumará al progreso actual de tu meta.")) {
                     HStack {
                         Text("$").foregroundColor(.gray)
-                        TextField("Monto a abonar", text: $amountInput)
+                        TextField("0", text: $amountInput)
                             .keyboardType(.numberPad)
+                            .onChange(of: amountInput) { _, v in
+                                amountInput = formatAsCurrency(v)
+                            }
                     }
                 }
                 
@@ -595,5 +632,15 @@ struct DepositGoalView: View {
             .navigationTitle("Abonar a Meta")
             .navigationBarItems(trailing: Button("Cancelar") { presentationMode.wrappedValue.dismiss() })
         }
+    }
+    
+    private func formatAsCurrency(_ value: String) -> String {
+        let filtered = value.filter { "0123456789".contains($0) }
+        if let intValue = Int(filtered) {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            return formatter.string(from: NSNumber(value: intValue)) ?? ""
+        }
+        return ""
     }
 }
