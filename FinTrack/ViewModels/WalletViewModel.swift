@@ -16,11 +16,17 @@ class WalletViewModel: ObservableObject {
         isLoading = false
     }
     
-    func addAccount(name: String, type: String, currency: String, balance: Double, isDebt: Bool) async {
+    func addAccount(name: String, type: String, currency: String, balance: Double, isDebt: Bool, lastFour: String? = nil) async {
         isLoading = true
         do {
             let finalBalance = isDebt ? -abs(balance) : balance
-            let _ = try await SupabaseManager.shared.insertAccount(name: name, type: type, currency: currency, balance: finalBalance)
+            let _ = try await SupabaseManager.shared.insertAccount(
+                name: name,
+                type: type,
+                currency: currency,
+                balance: finalBalance,
+                lastFour: lastFour
+            )
             
             if finalBalance != 0 {
                 let transactionType = finalBalance > 0 ? "income" : "expense"

@@ -49,11 +49,11 @@ struct DashboardView: View {
                                     HStack {
                                         ZStack {
                                             Circle()
-                                                .fill(transaction.type == "income" ? Color.green.opacity(0.2) : Color.red.opacity(0.2))
+                                                .fill(transactionBadgeColor(for: transaction.type).opacity(0.15))
                                                 .frame(width: 45, height: 45)
                                             
-                                            Image(systemName: transaction.type == "income" ? "arrow.down.left" : "cart.fill")
-                                                .foregroundColor(transaction.type == "income" ? .green : .red)
+                                            Image(systemName: transactionIcon(for: transaction.type))
+                                                .foregroundColor(transactionBadgeColor(for: transaction.type))
                                         }
                                         
                                         VStack(alignment: .leading, spacing: 4) {
@@ -67,10 +67,10 @@ struct DashboardView: View {
                                         
                                         Spacer()
                                         
-                                        Text(transaction.type == "income" ? "+$\(transaction.amount, specifier: "%.2f")" : "-$\(abs(transaction.amount), specifier: "%.2f")")
+                                        Text(transactionAmountText(for: transaction))
                                             .font(.subheadline)
                                             .bold()
-                                            .foregroundColor(transaction.type == "income" ? .green : .primary)
+                                            .foregroundColor(transactionAmountColor(for: transaction))
                                     }
                                     .padding()
                                     .background(
@@ -128,5 +128,37 @@ struct DashboardView: View {
             return String(raw[..<bracketIndex])
         }
         return raw
+    }
+    
+    private func transactionIcon(for type: String) -> String {
+        switch type {
+        case "income": return "arrow.down.left"
+        case "transfer": return "arrow.left.arrow.right"
+        default: return "cart.fill"
+        }
+    }
+    
+    private func transactionBadgeColor(for type: String) -> Color {
+        switch type {
+        case "income": return .green
+        case "transfer": return .indigo
+        default: return .red
+        }
+    }
+    
+    private func transactionAmountText(for tx: Transaction) -> String {
+        switch tx.type {
+        case "income": return "+$\(String(format: "%.2f", tx.amount))"
+        case "transfer": return "$\(String(format: "%.2f", tx.amount))"
+        default: return "-$\(String(format: "%.2f", abs(tx.amount)))"
+        }
+    }
+    
+    private func transactionAmountColor(for tx: Transaction) -> Color {
+        switch tx.type {
+        case "income": return .green
+        case "transfer": return .indigo
+        default: return .primary
+        }
     }
 }

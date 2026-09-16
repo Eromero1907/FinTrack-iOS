@@ -163,7 +163,7 @@ class SupabaseManager {
         return try decoder.decode([Transaction].self, from: data)
     }
     
-    func insertTransaction(amount: Double, type: String, description: String, date: Date, sourceAccountId: UUID? = nil) async throws {
+    func insertTransaction(amount: Double, type: String, description: String, date: Date, sourceAccountId: UUID? = nil, destAccountId: UUID? = nil) async throws {
         guard let userId = currentUserId else { throw URLError(.userAuthenticationRequired) }
         
         var body: [String: Any] = [
@@ -176,11 +176,20 @@ class SupabaseManager {
         
         if let sourceAccountId = sourceAccountId {
             body["source_account_id"] = sourceAccountId.uuidString
-            // Sincronización contable: descontar o sumar al saldo de la cuenta específica
             if let account = try? await fetchAccount(id: sourceAccountId) {
-                let delta = type == "expense" ? -amount : amount
+                // Si es gasto o transferencia, sale dinero de la cuenta origen
+                let delta = (type == "expense" || type == "transfer") ? -amount : amount
                 let updatedBalance = account.currentBalance + delta
                 try? await updateAccountBalance(id: sourceAccountId, newBalance: updatedBalance)
+            }
+        }
+        
+        if let destAccountId = destAccountId {
+            body["dest_account_id"] = destAccountId.uuidString
+            // Si es transferencia o ingreso, entra dinero a la cuenta destino
+            if let destAccount = try? await fetchAccount(id: destAccountId) {
+                let updatedBalance = destAccount.currentBalance + amount
+                try? await updateAccountBalance(id: destAccountId, newBalance: updatedBalance)
             }
         }
         
@@ -189,12 +198,17 @@ class SupabaseManager {
     }
     
     func deleteTransaction(id: UUID) async throws {
-        // Antes de borrar, revertimos el balance en la cuenta si existía una asociada
-        if let tx = try? await fetchTransaction(id: id), let sourceAccountId = tx.sourceAccountId {
-            if let account = try? await fetchAccount(id: sourceAccountId) {
-                let reverseDelta = tx.type == "expense" ? tx.amount : -tx.amount
+        if let tx = try? await fetchTransaction(id: id) {
+            // Revertir cuenta origen
+            if let sourceAccountId = tx.sourceAccountId, let account = try? await fetchAccount(id: sourceAccountId) {
+                let reverseDelta = (tx.type == "expense" || tx.type == "transfer") ? tx.amount : -tx.amount
                 let revertedBalance = account.currentBalance + reverseDelta
                 try? await updateAccountBalance(id: sourceAccountId, newBalance: revertedBalance)
+            }
+            // Revertir cuenta destino si fue transferencia
+            if let destAccountId = tx.destAccountId, let destAccount = try? await fetchAccount(id: destAccountId) {
+                let revertedBalance = destAccount.currentBalance - tx.amount
+                try? await updateAccountBalance(id: destAccountId, newBalance: revertedBalance)
             }
         }
         
@@ -259,16 +273,21 @@ class SupabaseManager {
         _ = try await makeAuthRequest(path: "accounts?id=eq.\(id.uuidString)", method: "PATCH", body: data)
     }
     
-    func insertAccount(name: String, type: String, currency: String, balance: Double) async throws -> Account {
+    func insertAccount(name: String, type: String, currency: String, balance: Double, lastFour: String? = nil) async throws -> Account {
         guard let userId = currentUserId else { throw URLError(.userAuthenticationRequired) }
         
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "user_id": userId,
             "name": name,
             "type": type,
             "currency": currency,
             "current_balance": balance
         ]
+        
+        if let lastFour = lastFour, !lastFour.isEmpty {
+            body["last_four"] = lastFour
+        }
+        
         let data = try JSONSerialization.data(withJSONObject: body)
         let responseData = try await makeAuthRequest(path: "accounts", method: "POST", body: data)
         

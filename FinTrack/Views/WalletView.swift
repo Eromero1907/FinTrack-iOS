@@ -41,6 +41,7 @@ struct WalletView: View {
                                 AccountCard(
                                     name: account.name,
                                     type: account.type,
+                                    lastFour: account.lastFour,
                                     balance: account.currentBalance,
                                     currency: account.currency,
                                     color: cardColor(for: account.type)
@@ -122,6 +123,7 @@ struct WalletView: View {
 struct AccountCard: View {
     var name: String
     var type: String
+    var lastFour: String? = nil
     var balance: Double
     var currency: String
     var color: Color
@@ -152,8 +154,17 @@ struct AccountCard: View {
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(name)
-                    .font(.headline)
+                HStack(spacing: 6) {
+                    Text(name)
+                        .font(.headline)
+                    if let lastFour = lastFour, !lastFour.isEmpty {
+                        Text("•••• \(lastFour)")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.gray)
+                    }
+                }
+                
                 Text(type == "Préstamo / Me deben" ? "Por cobrar" : type)
                     .font(.caption)
                     .fontWeight(.medium)
@@ -200,6 +211,7 @@ struct AddAccountView: View {
     @State private var name: String = ""
     @State private var type: String = "Banco"
     @State private var currency: String = "COP"
+    @State private var lastFour: String = ""
     @State private var balanceString: String = ""
     @State private var creditLimitString: String = ""
     
@@ -213,6 +225,15 @@ struct AddAccountView: View {
                     TextField(namePlaceholder, text: $name)
                     Picker("Tipo", selection: $type) { ForEach(types, id: \.self) { Text($0) } }
                     Picker("Moneda", selection: $currency) { ForEach(currencies, id: \.self) { Text($0) } }
+                    
+                    if type != "Efectivo" && type != "Préstamo / Me deben" {
+                        TextField("Últimos 4 dígitos (ej. 1234)", text: $lastFour)
+                            .keyboardType(.numberPad)
+                            .onChange(of: lastFour) { _, v in
+                                let clean = v.filter { "0123456789".contains($0) }
+                                lastFour = String(clean.prefix(4))
+                            }
+                    }
                 }
                 
                 if type == "Tarjeta de Crédito" {
@@ -251,7 +272,14 @@ struct AddAccountView: View {
                         let balanceValue = Double(cleanBalance) ?? 0.0
                         let isDebt = type == "Tarjeta de Crédito"
                         
-                        await viewModel.addAccount(name: name, type: type, currency: currency, balance: balanceValue, isDebt: isDebt)
+                        await viewModel.addAccount(
+                            name: name,
+                            type: type,
+                            currency: currency,
+                            balance: balanceValue,
+                            isDebt: isDebt,
+                            lastFour: lastFour.isEmpty ? nil : lastFour
+                        )
                         presentationMode.wrappedValue.dismiss()
                     }
                 }) {

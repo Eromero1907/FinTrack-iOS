@@ -12,11 +12,13 @@ struct HistoryView: View {
     @State private var csvFileURL: URL? = nil
     @State private var showShareSheet: Bool = false
     
-    let categories = ["Todas", "Comida", "Transporte", "Compras", "Ocio", "Salud", "Servicios", "Supermercado", "Salario", "Inversión", "Otros"]
+    let categories = ["Todas", "Comida", "Transporte", "Compras", "Ocio", "Salud", "Servicios", "Supermercado", "Salario", "Inversión", "Transferencias", "Otros"]
     
     var filteredTransactions: [Transaction] {
         if selectedCategory == "Todas" {
             return viewModel.transactions
+        } else if selectedCategory == "Transferencias" {
+            return viewModel.transactions.filter { $0.type == "transfer" }
         } else {
             return viewModel.transactions.filter { tx in
                 let desc = tx.description ?? ""
@@ -77,11 +79,11 @@ struct HistoryView: View {
                             HStack {
                                 ZStack {
                                     Circle()
-                                        .fill(transaction.type == "income" ? Color.green.opacity(0.15) : Color.red.opacity(0.15))
+                                        .fill(transactionBadgeColor(for: transaction.type).opacity(0.15))
                                         .frame(width: 42, height: 42)
                                     
-                                    Image(systemName: transaction.type == "income" ? "arrow.down.left" : "cart.fill")
-                                        .foregroundColor(transaction.type == "income" ? .green : .red)
+                                    Image(systemName: transactionIcon(for: transaction.type))
+                                        .foregroundColor(transactionBadgeColor(for: transaction.type))
                                 }
                                 
                                 VStack(alignment: .leading, spacing: 4) {
@@ -95,10 +97,10 @@ struct HistoryView: View {
                                 
                                 Spacer()
                                 
-                                Text(transaction.type == "income" ? "+$\(transaction.amount, specifier: "%.2f")" : "-$\(abs(transaction.amount), specifier: "%.2f")")
+                                Text(transactionAmountText(for: transaction))
                                     .font(.subheadline)
                                     .bold()
-                                    .foregroundColor(transaction.type == "income" ? .green : .primary)
+                                    .foregroundColor(transactionAmountColor(for: transaction))
                             }
                             .padding(.vertical, 4)
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -182,18 +184,49 @@ struct HistoryView: View {
         return "Otros"
     }
     
+    private func transactionIcon(for type: String) -> String {
+        switch type {
+        case "income": return "arrow.down.left"
+        case "transfer": return "arrow.left.arrow.right"
+        default: return "cart.fill"
+        }
+    }
+    
+    private func transactionBadgeColor(for type: String) -> Color {
+        switch type {
+        case "income": return .green
+        case "transfer": return .indigo
+        default: return .red
+        }
+    }
+    
+    private func transactionAmountText(for tx: Transaction) -> String {
+        switch tx.type {
+        case "income": return "+$\(String(format: "%.2f", tx.amount))"
+        case "transfer": return "$\(String(format: "%.2f", tx.amount))"
+        default: return "-$\(String(format: "%.2f", abs(tx.amount)))"
+        }
+    }
+    
+    private func transactionAmountColor(for tx: Transaction) -> Color {
+        switch tx.type {
+        case "income": return .green
+        case "transfer": return .indigo
+        default: return .primary
+        }
+    }
+    
     // MARK: - Generación de archivo Excel / CSV
     private func exportToCSV() {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm"
         
-        // Cabecera compatible con Excel (UTF-8 con BOM para acentos en español)
         var csvString = "\u{FEFF}Fecha,Tipo,Categoría,Descripción,Monto\n"
         
         for tx in viewModel.transactions {
             let dateStr = dateFormatter.string(from: tx.date)
-            let typeStr = tx.type == "income" ? "Ingreso" : "Gasto"
-            let catStr = extractCategory(from: tx.description)
+            let typeStr = tx.type == "income" ? "Ingreso" : (tx.type == "transfer" ? "Transferencia / Pago" : "Gasto")
+            let catStr = tx.type == "transfer" ? "Transferencia" : extractCategory(from: tx.description)
             let descStr = cleanDescription(tx.description).replacingOccurrences(of: ",", with: " ")
             let amountStr = String(format: "%.2f", tx.amount)
             
