@@ -8,6 +8,10 @@ struct HistoryView: View {
     @State private var transactionToDelete: Transaction? = nil
     @State private var showDeleteConfirmation: Bool = false
     
+    // Control de exportación a Excel / CSV
+    @State private var csvFileURL: URL? = nil
+    @State private var showShareSheet: Bool = false
+    
     let categories = ["Todas", "Comida", "Transporte", "Compras", "Ocio", "Salud", "Servicios", "Supermercado", "Salario", "Inversión", "Otros"]
     
     var filteredTransactions: [Transaction] {
@@ -97,7 +101,6 @@ struct HistoryView: View {
                                     .foregroundColor(transaction.type == "income" ? .green : .primary)
                             }
                             .padding(.vertical, 4)
-                            // 1. Bloqueo de deslizamiento accidental: requires tap
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) {
                                     transactionToDelete = transaction
@@ -106,7 +109,6 @@ struct HistoryView: View {
                                     Label("Eliminar", systemImage: "trash")
                                 }
                             }
-                            // 2. Opción también por long-press
                             .contextMenu {
                                 Button(role: .destructive) {
                                     transactionToDelete = transaction
@@ -121,13 +123,24 @@ struct HistoryView: View {
                 }
             }
             .navigationTitle("Historial")
+            .navigationBarItems(trailing: Button(action: {
+                exportToCSV()
+            }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "square.and.arrow.up")
+                    Text("Excel")
+                }
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundColor(viewModel.transactions.isEmpty ? .gray : .blue)
+            }
+            .disabled(viewModel.transactions.isEmpty))
             .refreshable {
                 await viewModel.fetchTransactions()
             }
             .task {
                 await viewModel.fetchTransactions()
             }
-            // 3. Ventana emergente obligatoria de confirmación
             .alert(
                 "¿Eliminar este movimiento?",
                 isPresented: $showDeleteConfirmation,
@@ -144,6 +157,11 @@ struct HistoryView: View {
             } message: { tx in
                 Text("Se eliminará '\(cleanDescription(tx.description))' por $\(String(format: "%.2f", tx.amount)). El balance total se recalculará automáticamente.")
             }
+            .sheet(isPresented: $showShareSheet) {
+                if let url = csvFileURL {
+                    ShareSheet(activityItems: [url])
+                }
+            }
         }
     }
     
@@ -154,4 +172,57 @@ struct HistoryView: View {
         }
         return raw
     }
+    
+    private func extractCategory(from raw: String?) -> String {
+        guard let raw = raw else { return "Otros" }
+        if let start = raw.range(of: "[", options: .backwards)?.upperBound,
+           let end = raw.range(of: "]", options: .backwards)?.lowerBound {
+            return String(raw[start..<end])
+        }
+        return "Otros"
+    }
+    
+    // MARK: - Generación de archivo Excel / CSV
+    private func exportToCSV() {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm"
+        
+        // Cabecera compatible con Excel (UTF-8 con BOM para acentos en español)
+        var csvString = "\u{FEFF}Fecha,Tipo,Categoría,Descripción,Monto\n"
+        
+        for tx in viewModel.transactions {
+            let dateStr = dateFormatter.string(from: tx.date)
+            let typeStr = tx.type == "income" ? "Ingreso" : "Gasto"
+            let catStr = extractCategory(from: tx.description)
+            let descStr = cleanDescription(tx.description).replacingOccurrences(of: ",", with: " ")
+            let amountStr = String(format: "%.2f", tx.amount)
+            
+            csvString.append("\"\(dateStr)\",\"\(typeStr)\",\"\(catStr)\",\"\(descStr)\",\(amountStr)\n")
+        }
+        
+        let fileName = "FinTrack_Movimientos_\(Date().formatted(date: .numeric, time: .omitted)).csv"
+            .replacingOccurrences(of: "/", with: "-")
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        
+        do {
+            try csvString.write(to: tempURL, atomically: true, encoding: .utf8)
+            self.csvFileURL = tempURL
+            self.showShareSheet = true
+        } catch {
+            print("Error al generar CSV: \(error)")
+        }
+    }
+}
+
+// Representable para la hoja de compartir nativa de iOS (AirDrop, WhatsApp, Excel, Archivos)
+struct ShareSheet: UIViewControllerRepresentable {
+    var activityItems: [Any]
+    var applicationActivities: [UIActivity]? = nil
+    
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
