@@ -30,3 +30,7 @@ Manifest.lock
 # Supabase Local environment (in case you use it later)
 supabase/.temp/
 supabase/.branch/
+
+# Local agents / zip archives
+Agentes_Desarrollo/
+*.zip

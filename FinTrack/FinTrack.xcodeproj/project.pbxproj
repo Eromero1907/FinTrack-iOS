@@ -14,6 +14,20 @@
 		668B5333305905A600C4CC01 /* FinTrackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668B5332305905A600C4CC01 /* FinTrackTests.swift */; };
 		668B533D305905A600C4CC01 /* FinTrackUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668B533C305905A600C4CC01 /* FinTrackUITests.swift */; };
 		668B533F305905A600C4CC01 /* FinTrackUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668B533E305905A600C4CC01 /* FinTrackUITestsLaunchTests.swift */; };
+		66B6B87E305A4BF500DB568D /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B6B874305A4BF500DB568D /* Category.swift */; };
+		66B6B87F305A4BF500DB568D /* Transaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B6B875305A4BF500DB568D /* Transaction.swift */; };
+		66B6B880305A4BF500DB568D /* Account.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B6B876305A4BF500DB568D /* Account.swift */; };
+		66B6B881305A4BF500DB568D /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B6B878305A4BF500DB568D /* DashboardView.swift */; };
+		66B6B882305A4BF500DB568D /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B6B879305A4BF500DB568D /* HistoryView.swift */; };
+		66B6B883305A4BF500DB568D /* SupabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B6B87B305A4BF500DB568D /* SupabaseManager.swift */; };
+		66B6B884305A4BF500DB568D /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B6B87D305A4BF500DB568D /* DashboardViewModel.swift */; };
+		66B6B886305A60D700DB568D /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B6B885305A60D700DB568D /* WalletView.swift */; };
+		66B6B888305A6F9100DB568D /* AddTransactionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B6B887305A6F9100DB568D /* AddTransactionView.swift */; };
+		66B6B88B305A728200DB568D /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B6B889305A728200DB568D /* AuthView.swift */; };
+		66B6B88E305A735300DB568D /* AuthModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B6B88D305A735300DB568D /* AuthModels.swift */; };
+		66B6B890305A74CD00DB568D /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B6B88F305A74CD00DB568D /* AuthViewModel.swift */; };
+		66B6B892305A7B5F00DB568D /* WalletViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B6B891305A7B5F00DB568D /* WalletViewModel.swift */; };
+		66CD40CB305AF917000230FC /* BudgetsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66CD40CA305AF917000230FC /* BudgetsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -44,6 +58,20 @@
 		668B5338305905A600C4CC01 /* FinTrackUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FinTrackUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		668B533C305905A600C4CC01 /* FinTrackUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinTrackUITests.swift; sourceTree = "<group>"; };
 		668B533E305905A600C4CC01 /* FinTrackUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinTrackUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		66B6B874305A4BF500DB568D /* Category.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Category.swift; sourceTree = "<group>"; };
+		66B6B875305A4BF500DB568D /* Transaction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Transaction.swift; sourceTree = "<group>"; };
+		66B6B876305A4BF500DB568D /* Account.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Account.swift; sourceTree = "<group>"; };
+		66B6B878305A4BF500DB568D /* DashboardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		66B6B879305A4BF500DB568D /* HistoryView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		66B6B87B305A4BF500DB568D /* SupabaseManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SupabaseManager.swift; sourceTree = "<group>"; };
+		66B6B87D305A4BF500DB568D /* DashboardViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
+		66B6B885305A60D700DB568D /* WalletView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WalletView.swift; sourceTree = "<group>"; };
+		66B6B887305A6F9100DB568D /* AddTransactionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AddTransactionView.swift; sourceTree = "<group>"; };
+		66B6B889305A728200DB568D /* AuthView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
+		66B6B88D305A735300DB568D /* AuthModels.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthModels.swift; sourceTree = "<group>"; };
+		66B6B88F305A74CD00DB568D /* AuthViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
+		66B6B891305A7B5F00DB568D /* WalletViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WalletViewModel.swift; sourceTree = "<group>"; };
+		66CD40CA305AF917000230FC /* BudgetsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BudgetsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,10 +102,15 @@
 		668B53153059059F00C4CC01 = {
 			isa = PBXGroup;
 			children = (
+				66B6B873305A4BF500DB568D /* Models */,
+				66B6B87A305A4BF500DB568D /* Services */,
+				66B6B87C305A4BF500DB568D /* ViewModels */,
+				66B6B877305A4BF500DB568D /* Views */,
 				668B5320305905A000C4CC01 /* FinTrack */,
 				668B5331305905A600C4CC01 /* FinTrackTests */,
 				668B533B305905A600C4CC01 /* FinTrackUITests */,
 				668B531F305905A000C4CC01 /* Products */,
+				66B6B870305A4A3800DB568D /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -127,6 +160,55 @@
 			path = FinTrackUITests;
 			sourceTree = "<group>";
 		};
+		66B6B870305A4A3800DB568D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		66B6B873305A4BF500DB568D /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				66B6B88D305A735300DB568D /* AuthModels.swift */,
+				66B6B874305A4BF500DB568D /* Category.swift */,
+				66B6B875305A4BF500DB568D /* Transaction.swift */,
+				66B6B876305A4BF500DB568D /* Account.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		66B6B877305A4BF500DB568D /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				66CD40CA305AF917000230FC /* BudgetsView.swift */,
+				66B6B889305A728200DB568D /* AuthView.swift */,
+				66B6B887305A6F9100DB568D /* AddTransactionView.swift */,
+				66B6B885305A60D700DB568D /* WalletView.swift */,
+				66B6B878305A4BF500DB568D /* DashboardView.swift */,
+				66B6B879305A4BF500DB568D /* HistoryView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		66B6B87A305A4BF500DB568D /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				66B6B87B305A4BF500DB568D /* SupabaseManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		66B6B87C305A4BF500DB568D /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				66B6B891305A7B5F00DB568D /* WalletViewModel.swift */,
+				66B6B88F305A74CD00DB568D /* AuthViewModel.swift */,
+				66B6B87D305A4BF500DB568D /* DashboardViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -143,6 +225,8 @@
 			dependencies = (
 			);
 			name = FinTrack;
+			packageProductDependencies = (
+			);
 			productName = FinTrack;
 			productReference = 668B531E305905A000C4CC01 /* FinTrack.app */;
 			productType = "com.apple.product-type.application";
@@ -215,6 +299,8 @@
 				Base,
 			);
 			mainGroup = 668B53153059059F00C4CC01;
+			packageReferences = (
+			);
 			productRefGroup = 668B531F305905A000C4CC01 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -257,8 +343,22 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				66B6B882305A4BF500DB568D /* HistoryView.swift in Sources */,
+				66B6B888305A6F9100DB568D /* AddTransactionView.swift in Sources */,
+				66B6B88B305A728200DB568D /* AuthView.swift in Sources */,
+				66B6B886305A60D700DB568D /* WalletView.swift in Sources */,
+				66B6B890305A74CD00DB568D /* AuthViewModel.swift in Sources */,
+				66CD40CB305AF917000230FC /* BudgetsView.swift in Sources */,
+				66B6B880305A4BF500DB568D /* Account.swift in Sources */,
+				66B6B881305A4BF500DB568D /* DashboardView.swift in Sources */,
+				66B6B884305A4BF500DB568D /* DashboardViewModel.swift in Sources */,
 				668B5324305905A000C4CC01 /* ContentView.swift in Sources */,
 				668B5322305905A000C4CC01 /* FinTrackApp.swift in Sources */,
+				66B6B87F305A4BF500DB568D /* Transaction.swift in Sources */,
+				66B6B88E305A735300DB568D /* AuthModels.swift in Sources */,
+				66B6B892305A7B5F00DB568D /* WalletViewModel.swift in Sources */,
+				66B6B87E305A4BF500DB568D /* Category.swift in Sources */,
+				66B6B883305A4BF500DB568D /* SupabaseManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
