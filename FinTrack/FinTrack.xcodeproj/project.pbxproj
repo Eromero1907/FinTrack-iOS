@@ -28,6 +28,7 @@
 		66B6B890305A74CD00DB568D /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B6B88F305A74CD00DB568D /* AuthViewModel.swift */; };
 		66B6B892305A7B5F00DB568D /* WalletViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66B6B891305A7B5F00DB568D /* WalletViewModel.swift */; };
 		66CD40CB305AF917000230FC /* BudgetsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66CD40CA305AF917000230FC /* BudgetsView.swift */; };
+		66CD40CE305B36F4000230FC /* FinTrackIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66CD40CD305B36F4000230FC /* FinTrackIntents.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -72,6 +73,7 @@
 		66B6B88F305A74CD00DB568D /* AuthViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
 		66B6B891305A7B5F00DB568D /* WalletViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WalletViewModel.swift; sourceTree = "<group>"; };
 		66CD40CA305AF917000230FC /* BudgetsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BudgetsView.swift; sourceTree = "<group>"; };
+		66CD40CD305B36F4000230FC /* FinTrackIntents.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FinTrackIntents.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,6 +104,7 @@
 		668B53153059059F00C4CC01 = {
 			isa = PBXGroup;
 			children = (
+				66CD40CC305B36F4000230FC /* Intents */,
 				66B6B873305A4BF500DB568D /* Models */,
 				66B6B87A305A4BF500DB568D /* Services */,
 				66B6B87C305A4BF500DB568D /* ViewModels */,
@@ -207,6 +210,14 @@
 				66B6B87D305A4BF500DB568D /* DashboardViewModel.swift */,
 			);
 			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		66CD40CC305B36F4000230FC /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+				66CD40CD305B36F4000230FC /* FinTrackIntents.swift */,
+			);
+			path = Intents;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -347,6 +358,7 @@
 				66B6B888305A6F9100DB568D /* AddTransactionView.swift in Sources */,
 				66B6B88B305A728200DB568D /* AuthView.swift in Sources */,
 				66B6B886305A60D700DB568D /* WalletView.swift in Sources */,
+				66CD40CE305B36F4000230FC /* FinTrackIntents.swift in Sources */,
 				66B6B890305A74CD00DB568D /* AuthViewModel.swift in Sources */,
 				66CD40CB305AF917000230FC /* BudgetsView.swift in Sources */,
 				66B6B880305A4BF500DB568D /* Account.swift in Sources */,

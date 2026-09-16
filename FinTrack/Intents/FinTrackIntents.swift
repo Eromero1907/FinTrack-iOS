@@ -10,7 +10,7 @@ struct LogTransactionIntent: AppIntent {
     @Parameter(title: "Monto", description: "El valor del movimiento (ej. 25000)")
     var amount: Double
     
-    @Parameter(title: "Tipo", default: "expense", description: "expense (gasto), income (ingreso) o transfer (transferencia/pago)")
+    @Parameter(title: "Tipo", description: "expense (gasto), income (ingreso) o transfer (transferencia/pago)", default: "expense")
     var type: String
     
     @Parameter(title: "Descripción", default: "Movimiento Atajo")
