@@ -97,6 +97,9 @@ struct WalletView: View {
                     await viewModel.fetchAccounts()
                 }
             }
+            .refreshable {
+                await viewModel.fetchAccounts()
+            }
         }
     }
     

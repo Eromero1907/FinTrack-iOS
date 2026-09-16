@@ -176,6 +176,12 @@ class SupabaseManager {
         
         if let sourceAccountId = sourceAccountId {
             body["source_account_id"] = sourceAccountId.uuidString
+            // Sincronización contable: descontar o sumar al saldo de la cuenta específica
+            if let account = try? await fetchAccount(id: sourceAccountId) {
+                let delta = type == "expense" ? -amount : amount
+                let updatedBalance = account.currentBalance + delta
+                try? await updateAccountBalance(id: sourceAccountId, newBalance: updatedBalance)
+            }
         }
         
         let data = try JSONSerialization.data(withJSONObject: body)
@@ -183,8 +189,34 @@ class SupabaseManager {
     }
     
     func deleteTransaction(id: UUID) async throws {
+        // Antes de borrar, revertimos el balance en la cuenta si existía una asociada
+        if let tx = try? await fetchTransaction(id: id), let sourceAccountId = tx.sourceAccountId {
+            if let account = try? await fetchAccount(id: sourceAccountId) {
+                let reverseDelta = tx.type == "expense" ? tx.amount : -tx.amount
+                let revertedBalance = account.currentBalance + reverseDelta
+                try? await updateAccountBalance(id: sourceAccountId, newBalance: revertedBalance)
+            }
+        }
+        
         let path = "transactions?id=eq.\(id.uuidString)"
         _ = try await makeAuthRequest(path: path, method: "DELETE")
+    }
+    
+    func fetchTransaction(id: UUID) async throws -> Transaction? {
+        let data = try await makeAuthRequest(path: "transactions?id=eq.\(id.uuidString)&select=*")
+        let decoder = JSONDecoder()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let dateString = try container.decode(String.self)
+            if let date = formatter.date(from: dateString) { return date }
+            formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+            if let date = formatter.date(from: dateString) { return date }
+            return Date()
+        }
+        let list = try decoder.decode([Transaction].self, from: data)
+        return list.first
     }
     
     // MARK: - Accounts
@@ -202,6 +234,29 @@ class SupabaseManager {
             return Date()
         }
         return try decoder.decode([Account].self, from: data)
+    }
+    
+    func fetchAccount(id: UUID) async throws -> Account? {
+        let data = try await makeAuthRequest(path: "accounts?id=eq.\(id.uuidString)&select=*")
+        let decoder = JSONDecoder()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let dateString = try container.decode(String.self)
+            if let date = formatter.date(from: dateString) { return date }
+            formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+            if let date = formatter.date(from: dateString) { return date }
+            return Date()
+        }
+        let accounts = try decoder.decode([Account].self, from: data)
+        return accounts.first
+    }
+    
+    func updateAccountBalance(id: UUID, newBalance: Double) async throws {
+        let body: [String: Any] = ["current_balance": newBalance]
+        let data = try JSONSerialization.data(withJSONObject: body)
+        _ = try await makeAuthRequest(path: "accounts?id=eq.\(id.uuidString)", method: "PATCH", body: data)
     }
     
     func insertAccount(name: String, type: String, currency: String, balance: Double) async throws -> Account {
