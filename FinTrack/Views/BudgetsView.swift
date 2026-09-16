@@ -1,12 +1,34 @@
 import SwiftUI
 
+// Modelo para metas de ahorro persistentes
+struct SavingsGoal: Identifiable, Codable {
+    var id = UUID()
+    var title: String
+    var icon: String
+    var colorName: String
+    var currentAmount: Double
+    var targetAmount: Double
+    
+    var progress: Double {
+        guard targetAmount > 0 else { return 0 }
+        return min(currentAmount / targetAmount, 1.0)
+    }
+}
+
 struct BudgetsView: View {
     @StateObject private var viewModel = DashboardViewModel()
     @AppStorage("monthly_budget_limit") private var monthlyBudgetLimit: Double = 2000000.0
+    
+    // Estado para modificar presupuesto
     @State private var showEditBudgetSheet = false
     @State private var newBudgetInput: String = ""
     
-    // Categorías con sus respectivos colores e íconos para la gráfica/desglose
+    // Metas de ahorro dinámicas guardadas en el teléfono
+    @State private var goals: [SavingsGoal] = []
+    @State private var showAddGoalSheet = false
+    @State private var selectedGoalForDeposit: SavingsGoal? = nil
+    @State private var depositAmountInput: String = ""
+    
     let categoryMeta: [String: (icon: String, color: Color)] = [
         "Comida": ("fork.knife", .orange),
         "Transporte": ("car.fill", .blue),
@@ -20,20 +42,17 @@ struct BudgetsView: View {
         "Otros": ("ellipsis.circle.fill", .gray)
     ]
     
-    // Gasto total de solo los gastos (expense)
     var totalExpenses: Double {
         viewModel.transactions
             .filter { $0.type == "expense" }
             .reduce(0) { $0 + $1.amount }
     }
     
-    // Progreso del presupuesto (0.0 a 1.0)
     var budgetProgress: Double {
         guard monthlyBudgetLimit > 0 else { return 0.0 }
         return min(totalExpenses / monthlyBudgetLimit, 1.0)
     }
     
-    // Desglose agrupado por categoría
     var categoryBreakdown: [(category: String, amount: Double, percentage: Double)] {
         let expenses = viewModel.transactions.filter { $0.type == "expense" }
         guard !expenses.isEmpty else { return [] }
@@ -83,7 +102,6 @@ struct BudgetsView: View {
                             }
                         }
                         
-                        // Barra de progreso personalizada
                         GeometryReader { geo in
                             ZStack(alignment: .leading) {
                                 RoundedRectangle(cornerRadius: 8)
@@ -172,7 +190,6 @@ struct BudgetsView: View {
                                             }
                                         }
                                         
-                                        // Barrita porcentual individual
                                         GeometryReader { geo in
                                             ZStack(alignment: .leading) {
                                                 RoundedRectangle(cornerRadius: 4)
@@ -197,32 +214,67 @@ struct BudgetsView: View {
                         }
                     }
                     
-                    // 3. SECCIÓN DE METAS DE AHORRO
+                    // 3. SECCIÓN DE METAS DE AHORRO DINÁMICAS
                     VStack(alignment: .leading, spacing: 14) {
-                        Text("Metas de Ahorro")
-                            .font(.title3)
-                            .bold()
+                        HStack {
+                            Text("Metas de Ahorro")
+                                .font(.title3)
+                                .bold()
+                            Spacer()
+                            Button(action: {
+                                showAddGoalSheet = true
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "plus.circle.fill")
+                                    Text("Nueva Meta")
+                                }
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.blue)
+                            }
+                        }
+                        .padding(.horizontal)
+                        
+                        if goals.isEmpty {
+                            VStack(spacing: 8) {
+                                Image(systemName: "target")
+                                    .font(.system(size: 34))
+                                    .foregroundColor(.gray.opacity(0.6))
+                                Text("Aún no tienes metas creadas.")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                                Text("Toca '+ Nueva Meta' para planear tus próximas vacaciones, compras o fondo de emergencia.")
+                                    .font(.caption)
+                                    .foregroundColor(.gray.opacity(0.8))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 20)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 24)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color(UIColor.systemBackground))
+                            )
                             .padding(.horizontal)
-                        
-                        // Tarjetas de metas pre-configuradas de ejemplo
-                        GoalProgressCard(
-                            title: "Fondo de Emergencia",
-                            icon: "shield.fill",
-                            color: .green,
-                            currentAmount: 1200000,
-                            targetAmount: 3000000
-                        )
-                        
-                        GoalProgressCard(
-                            title: "Vacaciones de Fin de Año",
-                            icon: "airplane.departure",
-                            color: .cyan,
-                            currentAmount: 850000,
-                            targetAmount: 2000000
-                        )
+                        } else {
+                            VStack(spacing: 12) {
+                                ForEach(goals) { goal in
+                                    InteractiveGoalCard(
+                                        goal: goal,
+                                        onDeposit: {
+                                            selectedGoalForDeposit = goal
+                                            depositAmountInput = ""
+                                        },
+                                        onDelete: {
+                                            deleteGoal(goal)
+                                        }
+                                    )
+                                }
+                            }
+                        }
                     }
                     
-                    Spacer(minLength: 20)
+                    Spacer(minLength: 30)
                 }
                 .padding(.top)
             }
@@ -232,8 +284,10 @@ struct BudgetsView: View {
                 await viewModel.fetchTransactions()
             }
             .task {
+                loadGoals()
                 await viewModel.fetchTransactions()
             }
+            // Sheet de ajustar presupuesto
             .sheet(isPresented: $showEditBudgetSheet) {
                 NavigationView {
                     Form {
@@ -243,7 +297,8 @@ struct BudgetsView: View {
                         }
                         
                         Button(action: {
-                            if let newLimit = Double(newBudgetInput.filter { "0123456789".contains($0) }), newLimit > 0 {
+                            let clean = newBudgetInput.filter { "0123456789".contains($0) }
+                            if let newLimit = Double(clean), newLimit > 0 {
                                 monthlyBudgetLimit = newLimit
                             }
                             showEditBudgetSheet = false
@@ -256,6 +311,22 @@ struct BudgetsView: View {
                     }
                     .navigationTitle("Ajustar Presupuesto")
                     .navigationBarItems(trailing: Button("Cancelar") { showEditBudgetSheet = false })
+                }
+            }
+            // Sheet para crear nueva meta
+            .sheet(isPresented: $showAddGoalSheet) {
+                CreateGoalView { newGoal in
+                    goals.append(newGoal)
+                    saveGoals()
+                }
+            }
+            // Sheet para abonar dinero a una meta
+            .sheet(item: $selectedGoalForDeposit) { goal in
+                DepositGoalView(goal: goal) { amountToAdd in
+                    if let index = goals.firstIndex(where: { $0.id == goal.id }) {
+                        goals[index].currentAmount += amountToAdd
+                        saveGoals()
+                    }
                 }
             }
         }
@@ -289,50 +360,92 @@ struct BudgetsView: View {
         }
         return "Otros"
     }
+    
+    // MARK: - Persistencia local de Metas
+    private func loadGoals() {
+        if let data = UserDefaults.standard.data(forKey: "user_savings_goals"),
+           let decoded = try? JSONDecoder().decode([SavingsGoal].self, from: data) {
+            self.goals = decoded
+        } else {
+            // Metas iniciales predeterminadas si está vacío por primera vez
+            self.goals = [
+                SavingsGoal(title: "Fondo de Emergencia", icon: "shield.fill", colorName: "green", currentAmount: 500000, targetAmount: 2000000),
+                SavingsGoal(title: "Vacaciones", icon: "airplane.departure", colorName: "cyan", currentAmount: 300000, targetAmount: 1500000)
+            ]
+            saveGoals()
+        }
+    }
+    
+    private func saveGoals() {
+        if let encoded = try? JSONEncoder().encode(goals) {
+            UserDefaults.standard.set(encoded, forKey: "user_savings_goals")
+        }
+    }
+    
+    private func deleteGoal(_ goal: SavingsGoal) {
+        withAnimation {
+            goals.removeAll { $0.id == goal.id }
+            saveGoals()
+        }
+    }
 }
 
-// Subvista para tarjeta de meta de ahorro
-struct GoalProgressCard: View {
-    let title: String
-    let icon: String
-    let color: Color
-    let currentAmount: Double
-    let targetAmount: Double
+// Subvista para tarjeta interactiva de meta
+struct InteractiveGoalCard: View {
+    let goal: SavingsGoal
+    let onDeposit: () -> Void
+    let onDelete: () -> Void
     
-    var progress: Double {
-        guard targetAmount > 0 else { return 0 }
-        return min(currentAmount / targetAmount, 1.0)
+    var color: Color {
+        switch goal.colorName {
+        case "green": return .green
+        case "cyan": return .cyan
+        case "purple": return .purple
+        case "orange": return .orange
+        case "pink": return .pink
+        default: return .blue
+        }
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
                 ZStack {
                     Circle()
                         .fill(color.opacity(0.15))
-                        .frame(width: 38, height: 38)
-                    Image(systemName: icon)
-                        .font(.system(size: 15, weight: .bold))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: goal.icon)
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(color)
                 }
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
+                    Text(goal.title)
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                    Text("$\(currentAmount, specifier: "%.0f") de $\(targetAmount, specifier: "%.0f")")
+                    Text("$\(goal.currentAmount, specifier: "%.0f") de $\(goal.targetAmount, specifier: "%.0f")")
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
                 
                 Spacer()
                 
-                Text("\(Int(progress * 100))%")
-                    .font(.subheadline)
-                    .bold()
+                Button(action: onDeposit) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "plus")
+                        Text("Abonar")
+                    }
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(color.opacity(0.15))
                     .foregroundColor(color)
+                    .cornerRadius(8)
+                }
             }
             
+            // Barra de progreso
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 6)
@@ -340,10 +453,22 @@ struct GoalProgressCard: View {
                         .frame(height: 8)
                     RoundedRectangle(cornerRadius: 6)
                         .fill(color)
-                        .frame(width: geo.size.width * CGFloat(progress), height: 8)
+                        .frame(width: geo.size.width * CGFloat(goal.progress), height: 8)
                 }
             }
             .frame(height: 8)
+            
+            HStack {
+                Text(goal.progress >= 1.0 ? "🎉 ¡Meta Cumplida!" : "Faltan $\(max(goal.targetAmount - goal.currentAmount, 0), specifier: "%.0f")")
+                    .font(.caption2)
+                    .foregroundColor(goal.progress >= 1.0 ? .green : .gray)
+                    .fontWeight(goal.progress >= 1.0 ? .bold : .regular)
+                Spacer()
+                Text("\(Int(goal.progress * 100))%")
+                    .font(.caption2)
+                    .bold()
+                    .foregroundColor(color)
+            }
         }
         .padding()
         .background(
@@ -352,5 +477,123 @@ struct GoalProgressCard: View {
                 .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 3)
         )
         .padding(.horizontal)
+        .contextMenu {
+            Button(role: .destructive, action: onDelete) {
+                Label("Eliminar Meta", systemImage: "trash")
+            }
+        }
+    }
+}
+
+// Modal para crear una nueva meta
+struct CreateGoalView: View {
+    @Environment(\.presentationMode) var presentationMode
+    @State private var title: String = ""
+    @State private var targetInput: String = ""
+    @State private var initialInput: String = ""
+    @State private var selectedIcon: String = "target"
+    @State private var selectedColor: String = "blue"
+    
+    let icons = ["target", "shield.fill", "airplane.departure", "car.fill", "house.fill", "gift.fill", "heart.fill"]
+    let colors = [("Azul", "blue"), ("Verde", "green"), ("Cian", "cyan"), ("Morado", "purple"), ("Naranja", "orange"), ("Rosa", "pink")]
+    
+    var onSave: (SavingsGoal) -> Void
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Nombre de la Meta")) {
+                    TextField("Ej: Viaje a Europa, Nuevo Celular", text: $title)
+                }
+                
+                Section(header: Text("Montos")) {
+                    TextField("Monto Objetivo (¿Cuánto necesitas?)", text: $targetInput)
+                        .keyboardType(.numberPad)
+                    TextField("Ahorro Inicial (opcional)", text: $initialInput)
+                        .keyboardType(.numberPad)
+                }
+                
+                Section(header: Text("Personalización")) {
+                    Picker("Ícono", selection: $selectedIcon) {
+                        ForEach(icons, id: \.self) { icon in
+                            Image(systemName: icon).tag(icon)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    
+                    Picker("Color", selection: $selectedColor) {
+                        ForEach(colors, id: \.1) { color in
+                            Text(color.0).tag(color.1)
+                        }
+                    }
+                }
+                
+                Button(action: {
+                    let cleanTarget = targetInput.filter { "0123456789".contains($0) }
+                    let cleanInitial = initialInput.filter { "0123456789".contains($0) }
+                    
+                    let target = Double(cleanTarget) ?? 0.0
+                    let initial = Double(cleanInitial) ?? 0.0
+                    
+                    guard !title.isEmpty, target > 0 else { return }
+                    
+                    let newGoal = SavingsGoal(
+                        title: title,
+                        icon: selectedIcon,
+                        colorName: selectedColor,
+                        currentAmount: initial,
+                        targetAmount: target
+                    )
+                    onSave(newGoal)
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    Text("Crear Meta")
+                        .bold()
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .foregroundColor(title.isEmpty || targetInput.isEmpty ? .gray : .blue)
+                }
+                .disabled(title.isEmpty || targetInput.isEmpty)
+            }
+            .navigationTitle("Nueva Meta")
+            .navigationBarItems(trailing: Button("Cancelar") { presentationMode.wrappedValue.dismiss() })
+        }
+    }
+}
+
+// Modal para abonar a una meta
+struct DepositGoalView: View {
+    @Environment(\.presentationMode) var presentationMode
+    let goal: SavingsGoal
+    @State private var amountInput: String = ""
+    var onDeposit: (Double) -> Void
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Meta: \(goal.title)"), footer: Text("Este monto se sumará al progreso actual de tu meta.")) {
+                    HStack {
+                        Text("$").foregroundColor(.gray)
+                        TextField("Monto a abonar", text: $amountInput)
+                            .keyboardType(.numberPad)
+                    }
+                }
+                
+                Button(action: {
+                    let clean = amountInput.filter { "0123456789".contains($0) }
+                    if let amount = Double(clean), amount > 0 {
+                        onDeposit(amount)
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }) {
+                    Text("Confirmar Abono")
+                        .bold()
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .foregroundColor(amountInput.isEmpty ? .gray : .green)
+                }
+                .disabled(amountInput.isEmpty)
+            }
+            .navigationTitle("Abonar a Meta")
+            .navigationBarItems(trailing: Button("Cancelar") { presentationMode.wrappedValue.dismiss() })
+        }
     }
 }
