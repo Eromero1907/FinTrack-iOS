@@ -273,8 +273,23 @@ class SupabaseManager {
         _ = try await makeAuthRequest(path: "accounts?id=eq.\(id.uuidString)", method: "PATCH", body: data)
     }
     
-    func insertAccount(name: String, type: String, currency: String, balance: Double, lastFour: String? = nil) async throws -> Account {
+    func insertAccount(
+        name: String,
+        type: String,
+        currency: String,
+        balance: Double,
+        lastFour: String? = nil,
+        lastFourDebit: String? = nil,
+        cutoffDay: Int? = nil,
+        paymentDay: Int? = nil,
+        isPrimary: Bool? = nil
+    ) async throws -> Account {
         guard let userId = currentUserId else { throw URLError(.userAuthenticationRequired) }
+        
+        // Si esta cuenta se marca como primaria, desmarcar cualquier otra primero
+        if isPrimary == true {
+            try? await clearPrimaryCreditCard()
+        }
         
         var body: [String: Any] = [
             "user_id": userId,
@@ -287,6 +302,18 @@ class SupabaseManager {
         if let lastFour = lastFour, !lastFour.isEmpty {
             body["last_four"] = lastFour
         }
+        if let lastFourDebit = lastFourDebit, !lastFourDebit.isEmpty {
+            body["last_four_debit"] = lastFourDebit
+        }
+        if let cutoffDay = cutoffDay {
+            body["cutoff_day"] = cutoffDay
+        }
+        if let paymentDay = paymentDay {
+            body["payment_day"] = paymentDay
+        }
+        if let isPrimary = isPrimary {
+            body["is_primary"] = isPrimary
+        }
         
         let data = try JSONSerialization.data(withJSONObject: body)
         let responseData = try await makeAuthRequest(path: "accounts", method: "POST", body: data)
@@ -298,12 +325,27 @@ class SupabaseManager {
             let container = try decoder.singleValueContainer()
             let dateString = try container.decode(String.self)
             if let date = formatter.date(from: dateString) { return date }
+            formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+            if let date = formatter.date(from: dateString) { return date }
             return Date()
         }
         
         let accounts = try decoder.decode([Account].self, from: responseData)
         guard let newAccount = accounts.first else { throw URLError(.cannotParseResponse) }
         return newAccount
+    }
+    
+    func clearPrimaryCreditCard() async throws {
+        let body: [String: Any] = ["is_primary": false]
+        let data = try JSONSerialization.data(withJSONObject: body)
+        _ = try await makeAuthRequest(path: "accounts?type=eq.Tarjeta%20de%20Cr%C3%A9dito", method: "PATCH", body: data)
+    }
+    
+    func setPrimaryCreditCard(id: UUID) async throws {
+        try await clearPrimaryCreditCard()
+        let body: [String: Any] = ["is_primary": true]
+        let data = try JSONSerialization.data(withJSONObject: body)
+        _ = try await makeAuthRequest(path: "accounts?id=eq.\(id.uuidString)", method: "PATCH", body: data)
     }
     
     func deleteAccount(id: UUID, name: String) async throws {
@@ -313,6 +355,54 @@ class SupabaseManager {
         }
         
         let path = "accounts?id=eq.\(id.uuidString)"
+        _ = try await makeAuthRequest(path: path, method: "DELETE")
+    }
+    
+    // MARK: - Account Aliases (Directorio de Cuentas Frecuentes)
+    func fetchAccountAliases() async throws -> [AccountAlias] {
+        let data = try await makeAuthRequest(path: "account_aliases?select=*&order=created_at.desc")
+        let decoder = JSONDecoder()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let dateString = try container.decode(String.self)
+            if let date = formatter.date(from: dateString) { return date }
+            formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+            if let date = formatter.date(from: dateString) { return date }
+            return Date()
+        }
+        return try decoder.decode([AccountAlias].self, from: data)
+    }
+    
+    func insertAccountAlias(accountNumberOrLast4: String, contactName: String) async throws -> AccountAlias {
+        guard let userId = currentUserId else { throw URLError(.userAuthenticationRequired) }
+        let body: [String: Any] = [
+            "user_id": userId,
+            "account_number_or_last4": accountNumberOrLast4.trimmingCharacters(in: .whitespaces),
+            "contact_name": contactName.trimmingCharacters(in: .whitespaces)
+        ]
+        let data = try JSONSerialization.data(withJSONObject: body)
+        let responseData = try await makeAuthRequest(path: "account_aliases", method: "POST", body: data)
+        
+        let decoder = JSONDecoder()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let dateString = try container.decode(String.self)
+            if let date = formatter.date(from: dateString) { return date }
+            formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+            if let date = formatter.date(from: dateString) { return date }
+            return Date()
+        }
+        let list = try decoder.decode([AccountAlias].self, from: responseData)
+        guard let item = list.first else { throw URLError(.cannotParseResponse) }
+        return item
+    }
+    
+    func deleteAccountAlias(id: UUID) async throws {
+        let path = "account_aliases?id=eq.\(id.uuidString)"
         _ = try await makeAuthRequest(path: path, method: "DELETE")
     }
 }

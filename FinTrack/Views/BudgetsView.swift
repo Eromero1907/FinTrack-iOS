@@ -41,10 +41,21 @@ struct BudgetsView: View {
         "Otros": ("ellipsis.circle.fill", .gray)
     ]
     
+    var currentCycle: (start: Date, end: Date, daysRemaining: Int, label: String, isCustomCycle: Bool) {
+        viewModel.currentCycleRange()
+    }
+    
+    var cycleExpenses: [Transaction] {
+        let cycle = currentCycle
+        return viewModel.transactions.filter { tx in
+            tx.type == "expense" &&
+            !(tx.description?.hasPrefix("Saldo inicial") ?? false) &&
+            tx.date >= cycle.start && tx.date <= cycle.end
+        }
+    }
+    
     var totalExpenses: Double {
-        viewModel.transactions
-            .filter { $0.type == "expense" }
-            .reduce(0) { $0 + $1.amount }
+        cycleExpenses.reduce(0) { $0 + $1.amount }
     }
     
     var budgetProgress: Double {
@@ -53,7 +64,7 @@ struct BudgetsView: View {
     }
     
     var categoryBreakdown: [(category: String, amount: Double, percentage: Double)] {
-        let expenses = viewModel.transactions.filter { $0.type == "expense" }
+        let expenses = cycleExpenses
         guard !expenses.isEmpty else { return [] }
         
         var dict: [String: Double] = [:]
@@ -76,11 +87,27 @@ struct BudgetsView: View {
                     VStack(alignment: .leading, spacing: 14) {
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Presupuesto del Mes")
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
+                                HStack(spacing: 6) {
+                                    Text(currentCycle.isCustomCycle ? "Ciclo de Facturación (TC)" : "Presupuesto del Mes")
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+                                    if currentCycle.isCustomCycle {
+                                        Image(systemName: "creditcard.fill")
+                                            .font(.caption2)
+                                            .foregroundColor(.purple)
+                                    }
+                                }
                                 Text("$\(totalExpenses, specifier: "%.2f") / $\(monthlyBudgetLimit, specifier: "%.0f")")
                                     .font(.system(size: 22, weight: .bold, design: .rounded))
+                                
+                                Text(currentCycle.label)
+                                    .font(.caption2)
+                                    .fontWeight(.medium)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(currentCycle.isCustomCycle ? Color.purple.opacity(0.12) : Color.gray.opacity(0.12))
+                                    .foregroundColor(currentCycle.isCustomCycle ? .purple : .gray)
+                                    .cornerRadius(6)
                             }
                             Spacer()
                             Button(action: {

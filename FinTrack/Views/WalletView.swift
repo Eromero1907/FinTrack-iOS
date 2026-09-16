@@ -5,6 +5,9 @@ struct WalletView: View {
     @StateObject private var viewModel = WalletViewModel()
     @State private var showAddAccount = false
     
+    @State private var showAddAlias = false
+    @State private var showLogoutAlert = false
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -39,14 +42,17 @@ struct WalletView: View {
                         } else {
                             ForEach(viewModel.accounts) { account in
                                 AccountCard(
-                                    name: account.name,
-                                    type: account.type,
-                                    lastFour: account.lastFour,
-                                    balance: account.currentBalance,
-                                    currency: account.currency,
+                                    account: account,
                                     color: cardColor(for: account.type)
                                 )
                                 .contextMenu {
+                                    if account.type == "Tarjeta de Crédito" && !(account.isPrimary ?? false) {
+                                        Button(action: {
+                                            Task { await viewModel.setPrimaryCreditCard(account: account) }
+                                        }) {
+                                            Label("Marcar como TC Principal", systemImage: "star.fill")
+                                        }
+                                    }
                                     Button(role: .destructive, action: {
                                         Task { await viewModel.deleteAccount(account: account) }
                                     }) {
@@ -57,7 +63,88 @@ struct WalletView: View {
                         }
                     }
                     
-                    Spacer(minLength: 40)
+                    // SECCIÓN DE CONTACTOS FRECUENTES (ALIAS PARA TRANSFERENCIAS)
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Contactos Frecuentes (Alias)")
+                                    .font(.headline)
+                                Text("Para que tus transferencias salgan con nombre propio")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            Spacer()
+                            Button(action: { showAddAlias = true }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "plus")
+                                    Text("Añadir")
+                                }
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color.blue.opacity(0.12))
+                                .foregroundColor(.blue)
+                                .cornerRadius(8)
+                            }
+                        }
+                        .padding(.horizontal)
+                        
+                        if viewModel.aliases.isEmpty {
+                            HStack {
+                                Image(systemName: "person.crop.circle.badge.plus")
+                                    .font(.title3)
+                                    .foregroundColor(.gray)
+                                Text("Añade cuentas como la de tu novia o familia para reconocerlas en el SMS.")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(Color(UIColor.systemBackground))
+                            )
+                            .padding(.horizontal)
+                        } else {
+                            VStack(spacing: 8) {
+                                ForEach(viewModel.aliases) { alias in
+                                    HStack {
+                                        Image(systemName: "person.circle.fill")
+                                            .foregroundColor(.purple)
+                                            .font(.title3)
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(alias.contactName)
+                                                .font(.subheadline)
+                                                .bold()
+                                            Text("Cuenta que termina en •••• \(String(alias.accountNumberOrLast4.suffix(4)))")
+                                                .font(.caption2)
+                                                .foregroundColor(.gray)
+                                        }
+                                        Spacer()
+                                        Button(role: .destructive, action: {
+                                            Task { await viewModel.deleteAlias(id: alias.id) }
+                                        }) {
+                                            Image(systemName: "trash")
+                                                .font(.caption)
+                                                .foregroundColor(.red.opacity(0.8))
+                                                .padding(6)
+                                        }
+                                    }
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 14)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color(UIColor.systemBackground))
+                                    )
+                                    .padding(.horizontal)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.top, 10)
+                    
+                    Spacer(minLength: 30)
                     
                     Button(action: {
                         showLogoutAlert = true
@@ -83,6 +170,9 @@ struct WalletView: View {
             .sheet(isPresented: $showAddAccount) {
                 AddAccountView(viewModel: viewModel)
             }
+            .sheet(isPresented: $showAddAlias) {
+                AddAliasView(viewModel: viewModel)
+            }
             .alert(isPresented: $showLogoutAlert) {
                 Alert(
                     title: Text("¿Cerrar Sesión?"),
@@ -104,8 +194,6 @@ struct WalletView: View {
         }
     }
     
-    @State private var showLogoutAlert = false
-    
     private func cardColor(for type: String) -> Color {
         switch type {
         case "Tarjeta de Crédito":
@@ -121,15 +209,11 @@ struct WalletView: View {
 }
 
 struct AccountCard: View {
-    var name: String
-    var type: String
-    var lastFour: String? = nil
-    var balance: Double
-    var currency: String
+    var account: Account
     var color: Color
     
     var iconName: String {
-        switch type {
+        switch account.type {
         case "Tarjeta de Crédito":
             return "creditcard.fill"
         case "Préstamo / Me deben":
@@ -155,39 +239,71 @@ struct AccountCard: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
-                    Text(name)
+                    Text(account.name)
                         .font(.headline)
-                    if let lastFour = lastFour, !lastFour.isEmpty {
-                        Text("•••• \(lastFour)")
-                            .font(.caption)
+                    if account.isPrimary == true {
+                        Text("⭐ Principal")
+                            .font(.caption2)
                             .fontWeight(.bold)
-                            .foregroundColor(.gray)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.purple.opacity(0.15))
+                            .foregroundColor(.purple)
+                            .cornerRadius(4)
                     }
                 }
                 
-                Text(type == "Préstamo / Me deben" ? "Por cobrar" : type)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
-                    .background(color.opacity(0.12))
-                    .foregroundColor(color)
-                    .cornerRadius(6)
+                // Detalles de dígitos
+                if account.type == "Banco" {
+                    HStack(spacing: 8) {
+                        if let lf = account.lastFour, !lf.isEmpty {
+                            Text("Cta: ••\(lf)")
+                                .font(.caption2)
+                                .foregroundColor(.gray)
+                        }
+                        if let lfd = account.lastFourDebit, !lfd.isEmpty {
+                            Text("Déb: ••\(lfd)")
+                                .font(.caption2)
+                                .foregroundColor(.blue)
+                        }
+                    }
+                } else if let lf = account.lastFour, !lf.isEmpty {
+                    Text("•••• \(lf)")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.gray)
+                }
+                
+                // Tipo o Fechas de Corte
+                if account.type == "Tarjeta de Crédito", let cutoff = account.cutoffDay {
+                    Text("Corte día \(cutoff)\(account.paymentDay != nil ? " · Pago día \(account.paymentDay!)" : "")")
+                        .font(.caption2)
+                        .foregroundColor(.purple)
+                } else {
+                    Text(account.type == "Préstamo / Me deben" ? "Por cobrar" : account.type)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(color.opacity(0.12))
+                        .foregroundColor(color)
+                        .cornerRadius(6)
+                }
             }
             
             Spacer()
             
             VStack(alignment: .trailing, spacing: 4) {
-                Text(balance, format: .currency(code: currency))
+                Text(account.currentBalance, format: .currency(code: account.currency))
                     .font(.title3)
                     .bold()
-                    .foregroundColor(balance >= 0 ? .primary : .red)
+                    .foregroundColor(account.currentBalance >= 0 ? .primary : .red)
                 
-                if balance < 0 {
+                if account.currentBalance < 0 {
                     Text("Deuda actual")
                         .font(.caption)
                         .foregroundColor(.red)
-                } else if type == "Préstamo / Me deben" {
+                } else if account.type == "Préstamo / Me deben" {
                     Text("Te deben")
                         .font(.caption)
                         .foregroundColor(.orange)
@@ -212,6 +328,10 @@ struct AddAccountView: View {
     @State private var type: String = "Banco"
     @State private var currency: String = "COP"
     @State private var lastFour: String = ""
+    @State private var lastFourDebit: String = ""
+    @State private var cutoffDayString: String = ""
+    @State private var paymentDayString: String = ""
+    @State private var isPrimary: Bool = false
     @State private var balanceString: String = ""
     @State private var creditLimitString: String = ""
     
@@ -226,20 +346,47 @@ struct AddAccountView: View {
                     Picker("Tipo", selection: $type) { ForEach(types, id: \.self) { Text($0) } }
                     Picker("Moneda", selection: $currency) { ForEach(currencies, id: \.self) { Text($0) } }
                     
-                    if type != "Efectivo" && type != "Préstamo / Me deben" {
-                        TextField("Últimos 4 dígitos (ej. 1234)", text: $lastFour)
+                    if type == "Banco" {
+                        TextField("Últimos 4 de la Cuenta (ej. 2667)", text: $lastFour)
                             .keyboardType(.numberPad)
                             .onChange(of: lastFour) { _, v in
-                                let clean = v.filter { "0123456789".contains($0) }
-                                lastFour = String(clean.prefix(4))
+                                lastFour = String(v.filter { "0123456789".contains($0) }.prefix(4))
+                            }
+                        
+                        TextField("Últimos 4 de la Tarjeta Débito (ej. 2131)", text: $lastFourDebit)
+                            .keyboardType(.numberPad)
+                            .onChange(of: lastFourDebit) { _, v in
+                                lastFourDebit = String(v.filter { "0123456789".contains($0) }.prefix(4))
+                            }
+                    } else if type == "Tarjeta de Crédito" {
+                        TextField("Últimos 4 dígitos de la tarjeta (ej. 5678)", text: $lastFour)
+                            .keyboardType(.numberPad)
+                            .onChange(of: lastFour) { _, v in
+                                lastFour = String(v.filter { "0123456789".contains($0) }.prefix(4))
                             }
                     }
                 }
                 
                 if type == "Tarjeta de Crédito" {
+                    Section(header: Text("Ciclo de Facturación (Presupuesto)")) {
+                        TextField("Día de corte (ej. 24)", text: $cutoffDayString)
+                            .keyboardType(.numberPad)
+                            .onChange(of: cutoffDayString) { _, v in
+                                cutoffDayString = String(v.filter { "0123456789".contains($0) }.prefix(2))
+                            }
+                        
+                        TextField("Día límite de pago (ej. 14)", text: $paymentDayString)
+                            .keyboardType(.numberPad)
+                            .onChange(of: paymentDayString) { _, v in
+                                paymentDayString = String(v.filter { "0123456789".contains($0) }.prefix(2))
+                            }
+                        
+                        Toggle("⭐ Tarjeta Principal de Facturación", isOn: $isPrimary)
+                    }
+                    
                     Section(
-                        header: Text("Información de la Tarjeta"),
-                        footer: Text("💡 El cupo total no suma a tu patrimonio (no es dinero tuyo). La deuda actual sí se resta.")
+                        header: Text("Cupo y Deuda"),
+                        footer: Text("💡 El cupo total no suma a tu patrimonio. La deuda actual sí se resta.")
                     ) {
                         TextField("Cupo Total (Límite)", text: $creditLimitString)
                             .keyboardType(.numberPad)
@@ -259,7 +406,10 @@ struct AddAccountView: View {
                             .onChange(of: balanceString) { _, v in balanceString = formatAsCurrency(v) }
                     }
                 } else {
-                    Section(header: Text("Saldo Actual")) {
+                    Section(
+                        header: Text("Saldo Inicial de Apertura"),
+                        footer: Text("💡 Este saldo forma tu Patrimonio Neto base. NO contará como gasto ni ingreso del mes.")
+                    ) {
                         TextField("¿Cuánto dinero tienes aquí?", text: $balanceString)
                             .keyboardType(.numberPad)
                             .onChange(of: balanceString) { _, v in balanceString = formatAsCurrency(v) }
@@ -272,13 +422,20 @@ struct AddAccountView: View {
                         let balanceValue = Double(cleanBalance) ?? 0.0
                         let isDebt = type == "Tarjeta de Crédito"
                         
+                        let cutoff = Int(cutoffDayString)
+                        let payment = Int(paymentDayString)
+                        
                         await viewModel.addAccount(
                             name: name,
                             type: type,
                             currency: currency,
                             balance: balanceValue,
                             isDebt: isDebt,
-                            lastFour: lastFour.isEmpty ? nil : lastFour
+                            lastFour: lastFour.isEmpty ? nil : lastFour,
+                            lastFourDebit: lastFourDebit.isEmpty ? nil : lastFourDebit,
+                            cutoffDay: cutoff,
+                            paymentDay: payment,
+                            isPrimary: isPrimary
                         )
                         presentationMode.wrappedValue.dismiss()
                     }
@@ -320,5 +477,50 @@ struct AddAccountView: View {
             return formatter.string(from: NSNumber(value: intValue)) ?? ""
         }
         return ""
+    }
+}
+
+// MARK: - Modal para Añadir Contactos Frecuentes (Alias)
+struct AddAliasView: View {
+    @Environment(\.presentationMode) var presentationMode
+    @ObservedObject var viewModel: WalletViewModel
+    
+    @State private var contactName: String = ""
+    @State private var accountNumber: String = ""
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(
+                    header: Text("Información del Destinatario"),
+                    footer: Text("💡 Cuando te llegue un SMS con este número de cuenta, FinTrack reemplazará los dígitos por el nombre de la persona automáticamente.")
+                ) {
+                    TextField("Nombre de la persona (ej. Valentina)", text: $contactName)
+                    TextField("Número de cuenta o últimos 4 dígitos", text: $accountNumber)
+                        .keyboardType(.numberPad)
+                        .onChange(of: accountNumber) { _, v in
+                            accountNumber = v.filter { "0123456789".contains($0) }
+                        }
+                }
+                
+                Button(action: {
+                    Task {
+                        await viewModel.addAlias(
+                            accountNumberOrLast4: accountNumber,
+                            contactName: contactName
+                        )
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }) {
+                    Text("Guardar Contacto")
+                        .bold()
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .foregroundColor(contactName.isEmpty || accountNumber.isEmpty ? .gray : .blue)
+                }
+                .disabled(contactName.isEmpty || accountNumber.isEmpty)
+            }
+            .navigationTitle("Nuevo Contacto")
+            .navigationBarItems(trailing: Button("Cancelar") { presentationMode.wrappedValue.dismiss() })
+        }
     }
 }
