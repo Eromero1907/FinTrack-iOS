@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AddTransactionView: View {
     @Environment(\.presentationMode) var presentationMode
+    var onSave: (() -> Void)? = nil
     
     @State private var type: String = "expense"
     @State private var amountString: String = ""
@@ -128,6 +129,12 @@ struct AddTransactionView: View {
             .navigationBarItems(trailing: Button("Cancelar") {
                 presentationMode.wrappedValue.dismiss()
             })
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Listo") { hideKeyboard() }
+                }
+            }
             .task {
                 do {
                     accounts = try await SupabaseManager.shared.fetchAccounts()
@@ -238,6 +245,7 @@ struct AddTransactionView: View {
                 )
             }
             
+            onSave?()
             presentationMode.wrappedValue.dismiss()
         } catch {
             errorMessage = "Error guardando movimiento: \(error.localizedDescription)"

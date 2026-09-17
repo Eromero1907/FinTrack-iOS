@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct HistoryView: View {
-    @StateObject private var viewModel = DashboardViewModel()
+    @EnvironmentObject private var viewModel: DashboardViewModel
     @State private var selectedCategory: String = "Todas"
     
     // Control de confirmación de borrado
@@ -202,9 +202,9 @@ struct HistoryView: View {
     
     private func transactionAmountText(for tx: Transaction) -> String {
         switch tx.type {
-        case "income": return "+$\(String(format: "%.2f", tx.amount))"
-        case "transfer": return "$\(String(format: "%.2f", tx.amount))"
-        default: return "-$\(String(format: "%.2f", abs(tx.amount)))"
+        case "income": return "+ \(tx.amount.formattedCurrency())"
+        case "transfer": return tx.amount.formattedCurrency()
+        default: return "- \(abs(tx.amount).formattedCurrency())"
         }
     }
     

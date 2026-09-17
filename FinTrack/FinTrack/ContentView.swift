@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     // Al usar AppStorage, el iPhone recuerda esta variable incluso si cierras la app por completo
     @AppStorage("isAuthenticated") private var isAuthenticated = false
+    @StateObject private var dashboardViewModel = DashboardViewModel()
     @State private var showAddTransaction = false
     
     var body: some View {
@@ -41,6 +42,7 @@ struct ContentView: View {
                         }
                 }
                 .accentColor(.blue)
+                .environmentObject(dashboardViewModel)
                 
                 Button(action: {
                     showAddTransaction = true
@@ -59,7 +61,14 @@ struct ContentView: View {
                 .offset(y: -10)
             }
             .sheet(isPresented: $showAddTransaction) {
-                AddTransactionView()
+                AddTransactionView(onSave: {
+                    Task {
+                        await dashboardViewModel.fetchTransactions()
+                    }
+                })
+            }
+            .task {
+                await dashboardViewModel.fetchTransactions()
             }
         }
     }

@@ -16,7 +16,7 @@ struct SavingsGoal: Identifiable, Codable {
 }
 
 struct BudgetsView: View {
-    @StateObject private var viewModel = DashboardViewModel()
+    @EnvironmentObject private var viewModel: DashboardViewModel
     @AppStorage("monthly_budget_limit") private var monthlyBudgetLimit: Double = 2000000.0
     
     // Estado para modificar presupuesto
@@ -97,7 +97,7 @@ struct BudgetsView: View {
                                             .foregroundColor(.purple)
                                     }
                                 }
-                                Text("$\(totalExpenses, specifier: "%.2f") / $\(monthlyBudgetLimit, specifier: "%.0f")")
+                                Text("\(totalExpenses.formattedCurrency()) / \(monthlyBudgetLimit.formattedCurrency())")
                                     .font(.system(size: 22, weight: .bold, design: .rounded))
                                 
                                 Text(currentCycle.label)
@@ -207,7 +207,7 @@ struct BudgetsView: View {
                                             Spacer()
                                             
                                             VStack(alignment: .trailing, spacing: 2) {
-                                                Text("$\(item.amount, specifier: "%.2f")")
+                                                Text(item.amount.formattedCurrency())
                                                     .font(.subheadline)
                                                     .bold()
                                                 Text("\(item.percentage, specifier: "%.1f")%")
@@ -343,6 +343,12 @@ struct BudgetsView: View {
                     }
                     .navigationTitle("Ajustar Presupuesto")
                     .navigationBarItems(trailing: Button("Cancelar") { showEditBudgetSheet = false })
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            Spacer()
+                            Button("Listo") { hideKeyboard() }
+                        }
+                    }
                 }
             }
             // Sheet para crear nueva meta con formateo en tiempo real
@@ -461,7 +467,7 @@ struct InteractiveGoalCard: View {
                     Text(goal.title)
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                    Text("$\(goal.currentAmount, specifier: "%.0f") de $\(goal.targetAmount, specifier: "%.0f")")
+                    Text("\(goal.currentAmount.formattedCurrency()) de \(goal.targetAmount.formattedCurrency())")
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
@@ -497,7 +503,7 @@ struct InteractiveGoalCard: View {
             .frame(height: 8)
             
             HStack {
-                Text(goal.progress >= 1.0 ? "🎉 ¡Meta Cumplida!" : "Faltan $\(max(goal.targetAmount - goal.currentAmount, 0), specifier: "%.0f")")
+                Text(goal.progress >= 1.0 ? "🎉 ¡Meta Cumplida!" : "Faltan \(max(goal.targetAmount - goal.currentAmount, 0).formattedCurrency())")
                     .font(.caption2)
                     .foregroundColor(goal.progress >= 1.0 ? .green : .gray)
                     .fontWeight(goal.progress >= 1.0 ? .bold : .regular)
@@ -607,6 +613,12 @@ struct CreateGoalView: View {
             }
             .navigationTitle("Nueva Meta")
             .navigationBarItems(trailing: Button("Cancelar") { presentationMode.wrappedValue.dismiss() })
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Listo") { hideKeyboard() }
+                }
+            }
         }
     }
     
@@ -658,6 +670,12 @@ struct DepositGoalView: View {
             }
             .navigationTitle("Abonar a Meta")
             .navigationBarItems(trailing: Button("Cancelar") { presentationMode.wrappedValue.dismiss() })
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Listo") { hideKeyboard() }
+                }
+            }
         }
     }
     

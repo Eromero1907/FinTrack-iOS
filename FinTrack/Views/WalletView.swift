@@ -2,6 +2,7 @@ import SwiftUI
 
 struct WalletView: View {
     @AppStorage("isAuthenticated") private var isAuthenticated = false
+    @EnvironmentObject private var dashboardViewModel: DashboardViewModel
     @StateObject private var viewModel = WalletViewModel()
     @State private var showAddAccount = false
     
@@ -179,6 +180,9 @@ struct WalletView: View {
                     message: Text("Tendrás que volver a ingresar tu correo y contraseña para entrar."),
                     primaryButton: .destructive(Text("Cerrar Sesión")) {
                         SupabaseManager.shared.signOut()
+                        withAnimation {
+                            isAuthenticated = false
+                        }
                     },
                     secondaryButton: .cancel(Text("Cancelar"))
                 )
@@ -186,10 +190,12 @@ struct WalletView: View {
             .onAppear {
                 Task {
                     await viewModel.fetchAccounts()
+                    await dashboardViewModel.fetchTransactions()
                 }
             }
             .refreshable {
                 await viewModel.fetchAccounts()
+                await dashboardViewModel.fetchTransactions()
             }
         }
     }
@@ -294,7 +300,7 @@ struct AccountCard: View {
             Spacer()
             
             VStack(alignment: .trailing, spacing: 4) {
-                Text(account.currentBalance, format: .currency(code: account.currency))
+                Text(account.currentBalance.formattedCurrency(code: account.currency))
                     .font(.title3)
                     .bold()
                     .foregroundColor(account.currentBalance >= 0 ? .primary : .red)
@@ -453,6 +459,12 @@ struct AddAccountView: View {
             }
             .navigationTitle(type == "Préstamo / Me deben" ? "Nuevo Préstamo" : "Nueva Cuenta")
             .navigationBarItems(trailing: Button("Cancelar") { presentationMode.wrappedValue.dismiss() })
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Listo") { hideKeyboard() }
+                }
+            }
         }
     }
     
@@ -496,12 +508,14 @@ struct AddAliasView: View {
                     footer: Text("💡 Cuando te llegue un SMS con este número de cuenta, FinTrack reemplazará los dígitos por el nombre de la persona automáticamente.")
                 ) {
                     TextField("Nombre del contacto (ej. Mamá, Arriendo)", text: $contactName)
-                    TextField("Número de cuenta o últimos 4 dígitos", text: $accountNumber)
+                    TextField("Últimos 4 dígitos de la cuenta (ej. 8733)", text: $accountNumber)
                         .keyboardType(.numberPad)
                         .onChange(of: accountNumber) { _, v in
-                            accountNumber = v.filter { "0123456789".contains($0) }
+                            accountNumber = String(v.filter { "0123456789".contains($0) }.prefix(4))
                         }
                 }
+                
+                let isFormValid = !contactName.trimmingCharacters(in: .whitespaces).isEmpty && accountNumber.count == 4
                 
                 Button(action: {
                     Task {
@@ -515,12 +529,18 @@ struct AddAliasView: View {
                     Text("Guardar Contacto")
                         .bold()
                         .frame(maxWidth: .infinity, alignment: .center)
-                        .foregroundColor(contactName.isEmpty || accountNumber.isEmpty ? .gray : .blue)
+                        .foregroundColor(isFormValid ? .blue : .gray)
                 }
-                .disabled(contactName.isEmpty || accountNumber.isEmpty)
+                .disabled(!isFormValid)
             }
             .navigationTitle("Nuevo Contacto")
             .navigationBarItems(trailing: Button("Cancelar") { presentationMode.wrappedValue.dismiss() })
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Listo") { hideKeyboard() }
+                }
+            }
         }
     }
 }

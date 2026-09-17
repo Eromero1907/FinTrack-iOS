@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct DashboardView: View {
-    @StateObject private var viewModel = DashboardViewModel()
+    @EnvironmentObject private var viewModel: DashboardViewModel
     @State private var transactionToDelete: Transaction? = nil
     @State private var showDeleteConfirmation: Bool = false
     
@@ -15,7 +15,7 @@ struct DashboardView: View {
                         Text("Balance Total")
                             .font(.subheadline)
                             .foregroundColor(.gray)
-                        Text("$\(viewModel.totalBalance, specifier: "%.2f")")
+                        Text(viewModel.totalBalance.formattedCurrency())
                             .font(.system(size: 45, weight: .bold, design: .rounded))
                             .foregroundColor(.primary)
                     }
@@ -148,9 +148,9 @@ struct DashboardView: View {
     
     private func transactionAmountText(for tx: Transaction) -> String {
         switch tx.type {
-        case "income": return "+$\(String(format: "%.2f", tx.amount))"
-        case "transfer": return "$\(String(format: "%.2f", tx.amount))"
-        default: return "-$\(String(format: "%.2f", abs(tx.amount)))"
+        case "income": return "+ \(tx.amount.formattedCurrency())"
+        case "transfer": return tx.amount.formattedCurrency()
+        default: return "- \(abs(tx.amount).formattedCurrency())"
         }
     }
     

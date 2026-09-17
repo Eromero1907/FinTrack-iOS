@@ -45,3 +45,28 @@ struct AccountAlias: Identifiable, Codable {
         case createdAt = "created_at"
     }
 }
+
+// MARK: - Extensiones Globales de Formato y Teclado
+import SwiftUI
+
+extension Double {
+    /// Formato limpio de moneda sin decimales para Colombia (COP) u otras divisas
+    func formattedCurrency(code: String = "COP") -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = code
+        formatter.locale = Locale(identifier: "es_CO")
+        formatter.maximumFractionDigits = 0
+        formatter.minimumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: self)) ?? "$\(Int(self))"
+    }
+}
+
+#if canImport(UIKit)
+extension View {
+    func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+#endif
+
