@@ -332,6 +332,7 @@ struct BudgetsView: View {
                             let clean = newBudgetInput.filter { "0123456789".contains($0) }
                             if let newLimit = Double(clean), newLimit > 0 {
                                 monthlyBudgetLimit = newLimit
+                                viewModel.updateWidgetData()
                             }
                             showEditBudgetSheet = false
                         }) {

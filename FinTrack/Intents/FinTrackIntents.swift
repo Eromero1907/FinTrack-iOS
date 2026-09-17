@@ -1,5 +1,6 @@
 import Foundation
 import AppIntents
+import WidgetKit
 
 // MARK: - 1. Atajo Estructurado: Registrar Transacción Manual o por Bloques
 @available(iOS 16.0, *)
@@ -60,6 +61,7 @@ struct LogTransactionIntent: AppIntent {
                 sourceAccountId: sourceAccountId,
                 destAccountId: destAccountId
             )
+            WidgetCenter.shared.reloadAllTimelines()
             return .result(value: "✓ Registrado con éxito: $\(Int(amount)) en \(desc)")
         } catch {
             return .result(value: "⚠️ Error al guardar en FinTrack: \(error.localizedDescription)")
@@ -336,6 +338,7 @@ struct ParseBankSMSIntent: AppIntent {
                 sourceAccountId: sourceAccount?.id,
                 destAccountId: destAccount?.id
             )
+            WidgetCenter.shared.reloadAllTimelines()
             
             if type == "transfer" {
                 return .result(value: "✓ FinTrack: Transferencia interna detectada ($\(Int(extractedAmount))) de \(sourceAccount?.name ?? "") a \(destAccount?.name ?? "")")

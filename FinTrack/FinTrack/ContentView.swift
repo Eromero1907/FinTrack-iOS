@@ -70,6 +70,11 @@ struct ContentView: View {
             .task {
                 await dashboardViewModel.fetchTransactions()
             }
+            .onOpenURL { url in
+                if url.scheme == "fintrack" && url.host == "add" {
+                    showAddTransaction = true
+                }
+            }
         }
     }
 }

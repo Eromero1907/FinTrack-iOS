@@ -58,6 +58,46 @@ class DashboardViewModel: ObservableObject {
                 return result
             }
         }
+        updateWidgetData()
+    }
+    
+    // MARK: - Actualización de Datos para Widgets de iOS 17
+    func updateWidgetData() {
+        let cycle = currentCycleRange()
+        let expenses = transactions.filter { tx in
+            tx.type == "expense" &&
+            !(tx.description?.hasPrefix("Saldo inicial") ?? false) &&
+            tx.date >= cycle.start && tx.date <= cycle.end
+        }.reduce(0.0) { $0 + $1.amount }
+        
+        let storedBudget = UserDefaults.standard.double(forKey: "monthly_budget_limit")
+        let budgetLimit = storedBudget > 0 ? storedBudget : 2000000.0
+        
+        let liquid = accounts.filter { $0.type != "Tarjeta de Crédito" }.reduce(0.0) { sum, acc in
+            sum + CurrencyRateService.shared.convertToCOP(amount: acc.currentBalance, from: acc.currency)
+        }
+        
+        let creditDebt = accounts.filter { $0.type == "Tarjeta de Crédito" }.reduce(0.0) { sum, acc in
+            sum + abs(CurrencyRateService.shared.convertToCOP(amount: acc.currentBalance, from: acc.currency))
+        }
+        
+        let usdRate = CurrencyRateService.shared.usdToCopRate
+        
+        let payload = FinTrackWidgetData(
+            totalBalance: totalBalance,
+            hasForeignCurrency: hasForeignCurrency,
+            usdRate: usdRate,
+            accountsBalance: liquid,
+            creditCardsDebt: creditDebt,
+            cycleExpenses: expenses,
+            monthlyBudgetLimit: budgetLimit,
+            daysRemaining: cycle.daysRemaining,
+            isCustomCycle: cycle.isCustomCycle,
+            cycleLabel: cycle.label,
+            lastUpdated: Date()
+        )
+        
+        WidgetDataManager.shared.saveWidgetData(payload)
     }
     
     var hasForeignCurrency: Bool {

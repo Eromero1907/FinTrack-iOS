@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		66E00002305C000000000001 /* WidgetDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E00001305C000000000003 /* WidgetDataManager.swift */; };
+		66E00002305C000000000002 /* WidgetDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E00001305C000000000003 /* WidgetDataManager.swift */; };
+		66E00002305C000000000003 /* FinTrackWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E00001305C000000000002 /* FinTrackWidgets.swift */; };
+		66E00002305C000000000004 /* FinTrackWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 66E00001305C000000000001 /* FinTrackWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		668B5322305905A000C4CC01 /* FinTrackApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668B5321305905A000C4CC01 /* FinTrackApp.swift */; };
 		668B5324305905A000C4CC01 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668B5323305905A000C4CC01 /* ContentView.swift */; };
 		668B5326305905A600C4CC01 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 668B5325305905A600C4CC01 /* Assets.xcassets */; };
@@ -32,6 +36,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		66E00005305C000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 668B53163059059F00C4CC01 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 66E00006305C000000000001;
+			remoteInfo = FinTrackWidgets;
+		};
 		668B532F305905A600C4CC01 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 668B53163059059F00C4CC01 /* Project object */;
@@ -49,6 +60,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		66E00001305C000000000001 /* FinTrackWidgets.appex */ = {isa = PBXFileReference; explicitFileType = wrapper.app-extension; includeInIndex = 0; path = FinTrackWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		66E00001305C000000000002 /* FinTrackWidgets.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FinTrackWidgets.swift; sourceTree = "<group>"; };
+		66E00001305C000000000003 /* WidgetDataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Models/WidgetDataManager.swift; sourceTree = "<group>"; };
 		668B531E305905A000C4CC01 /* FinTrack.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FinTrack.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		668B5321305905A000C4CC01 /* FinTrackApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinTrackApp.swift; sourceTree = "<group>"; };
 		668B5323305905A000C4CC01 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -76,7 +90,28 @@
 		66CD40CD305B36F4000230FC /* FinTrackIntents.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FinTrackIntents.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		66E00003305C000000000001 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				66E00002305C000000000004 /* FinTrackWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFrameworksBuildPhase section */
+		66E00008305C000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		668B531B3059059F00C4CC01 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -104,6 +139,7 @@
 		668B53153059059F00C4CC01 = {
 			isa = PBXGroup;
 			children = (
+				66E0000C305C000000000001 /* FinTrackWidgets */,
 				66CD40CC305B36F4000230FC /* Intents */,
 				66B6B873305A4BF500DB568D /* Models */,
 				66B6B87A305A4BF500DB568D /* Services */,
@@ -120,6 +156,7 @@
 		668B531F305905A000C4CC01 /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				66E00001305C000000000001 /* FinTrackWidgets.appex */,
 				668B531E305905A000C4CC01 /* FinTrack.app */,
 				668B532E305905A600C4CC01 /* FinTrackTests.xctest */,
 				668B5338305905A600C4CC01 /* FinTrackUITests.xctest */,
@@ -220,13 +257,39 @@
 			path = Intents;
 			sourceTree = "<group>";
 		};
+		66E0000C305C000000000001 /* FinTrackWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				66E00001305C000000000002 /* FinTrackWidgets.swift */,
+			);
+			path = FinTrackWidgets;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		66E00006305C000000000001 /* FinTrackWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 66E0000A305C000000000001 /* Build configuration list for PBXNativeTarget "FinTrackWidgets" */;
+			buildPhases = (
+				66E00007305C000000000001 /* Sources */,
+				66E00008305C000000000001 /* Frameworks */,
+				66E00009305C000000000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FinTrackWidgets;
+			productName = FinTrackWidgets;
+			productReference = 66E00001305C000000000001 /* FinTrackWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		668B531D3059059F00C4CC01 /* FinTrack */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 668B5342305905A600C4CC01 /* Build configuration list for PBXNativeTarget "FinTrack" */;
 			buildPhases = (
+				66E00003305C000000000001 /* Embed Foundation Extensions */,
 				668B531A3059059F00C4CC01 /* Sources */,
 				668B531B3059059F00C4CC01 /* Frameworks */,
 				668B531C3059059F00C4CC01 /* Resources */,
@@ -234,6 +297,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				66E00004305C000000000001 /* PBXTargetDependency */,
 			);
 			name = FinTrack;
 			packageProductDependencies = (
@@ -288,6 +352,9 @@
 				LastSwiftUpdateCheck = 1520;
 				LastUpgradeCheck = 1520;
 				TargetAttributes = {
+					66E00006305C000000000001 = {
+						CreatedOnToolsVersion = 15.2;
+					};
 					668B531D3059059F00C4CC01 = {
 						CreatedOnToolsVersion = 15.2;
 					};
@@ -316,6 +383,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				66E00006305C000000000001 /* FinTrackWidgets */,
 				668B531D3059059F00C4CC01 /* FinTrack */,
 				668B532D305905A600C4CC01 /* FinTrackTests */,
 				668B5337305905A600C4CC01 /* FinTrackUITests */,
@@ -324,6 +392,13 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		66E00009305C000000000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		668B531C3059059F00C4CC01 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -350,10 +425,20 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		66E00007305C000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				66E00002305C000000000002 /* WidgetDataManager.swift in Sources */,
+				66E00002305C000000000003 /* FinTrackWidgets.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		668B531A3059059F00C4CC01 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				66E00002305C000000000001 /* WidgetDataManager.swift in Sources */,
 				66B6B882305A4BF500DB568D /* HistoryView.swift in Sources */,
 				66B6B888305A6F9100DB568D /* AddTransactionView.swift in Sources */,
 				66B6B88B305A728200DB568D /* AuthView.swift in Sources */,
@@ -394,6 +479,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		66E00004305C000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 66E00006305C000000000001 /* FinTrackWidgets */;
+			targetProxy = 66E00005305C000000000001 /* PBXContainerItemProxy */;
+		};
 		668B5330305905A600C4CC01 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 668B531D3059059F00C4CC01 /* FinTrack */;
@@ -407,6 +497,62 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		66E0000B305C000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ENABLE_MODULES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = FinTrack;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.romero.FinTrack.FinTrackWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		66E0000B305C000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ENABLE_MODULES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = FinTrack;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.romero.FinTrack.FinTrackWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		668B5340305905A600C4CC01 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -663,6 +809,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		66E0000A305C000000000001 /* Build configuration list for PBXNativeTarget "FinTrackWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				66E0000B305C000000000001 /* Debug */,
+				66E0000B305C000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		668B53193059059F00C4CC01 /* Build configuration list for PBXProject "FinTrack" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
