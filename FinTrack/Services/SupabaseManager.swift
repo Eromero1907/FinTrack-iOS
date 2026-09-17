@@ -45,7 +45,7 @@ class SupabaseManager {
         self.accessToken = authResponse.accessToken
         self.refreshToken = authResponse.refreshToken
         self.currentUser = authResponse.user
-        self.currentUserId = authResponse.user.id
+        self.currentUserId = authResponse.user?.id
     }
     
     func signUp(email: String, password: String, firstName: String, lastName: String) async throws {
@@ -65,7 +65,7 @@ class SupabaseManager {
         self.accessToken = authResponse.accessToken
         self.refreshToken = authResponse.refreshToken
         self.currentUser = authResponse.user
-        self.currentUserId = authResponse.user.id
+        self.currentUserId = authResponse.user?.id
     }
     
     func signOut() {
@@ -76,34 +76,58 @@ class SupabaseManager {
         UserDefaults.standard.set(false, forKey: "isAuthenticated")
     }
     
+    private var refreshTask: Task<Bool, Never>?
+    
     private func refreshSessionToken() async -> Bool {
-        guard !isRefreshing else { return false }
-        guard let currentRefresh = refreshToken else { return false }
+        if let existing = refreshTask {
+            return await existing.value
+        }
         
-        isRefreshing = true
-        defer { isRefreshing = false }
-        
-        guard let url = URL(string: "\(projectURL)/auth/v1/token?grant_type=refresh_token") else { return false }
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue(apiKey, forHTTPHeaderField: "apikey")
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        let body = ["refresh_token": currentRefresh]
-        request.httpBody = try? JSONEncoder().encode(body)
-        
-        do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+        let task = Task<Bool, Never> { () -> Bool in
+            defer { self.refreshTask = nil }
+            guard let currentRefresh = self.refreshToken, !currentRefresh.isEmpty else {
+                print("No hay refresh token guardado.")
                 return false
             }
-            let authResponse = try JSONDecoder().decode(AuthResponse.self, from: data)
-            self.accessToken = authResponse.accessToken
-            self.refreshToken = authResponse.refreshToken
-            return true
-        } catch {
-            return false
+            
+            guard let url = URL(string: "\(self.projectURL)/auth/v1/token?grant_type=refresh_token") else { return false }
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.addValue(self.apiKey, forHTTPHeaderField: "apikey")
+            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+            let body = ["refresh_token": currentRefresh]
+            request.httpBody = try? JSONEncoder().encode(body)
+            
+            do {
+                let (data, response) = try await URLSession.shared.data(for: request)
+                guard let httpResponse = response as? HTTPURLResponse else { return false }
+                
+                guard httpResponse.statusCode == 200 else {
+                    let errStr = String(data: data, encoding: .utf8) ?? ""
+                    print("Error renovando sesión HTTP \(httpResponse.statusCode): \(errStr)")
+                    return false
+                }
+                
+                let authResponse = try JSONDecoder().decode(AuthResponse.self, from: data)
+                self.accessToken = authResponse.accessToken
+                if let newRefresh = authResponse.refreshToken, !newRefresh.isEmpty {
+                    self.refreshToken = newRefresh
+                }
+                if let user = authResponse.user {
+                    self.currentUser = user
+                    self.currentUserId = user.id
+                }
+                print("Sesión renovada exitosamente vía refresh token.")
+                return true
+            } catch {
+                print("Error de conexión o decodificación renovando token: \(error)")
+                return false
+            }
         }
+        
+        self.refreshTask = task
+        return await task.value
     }
     
     private func makeAuthRequest(path: String, method: String = "GET", body: Data? = nil, isRetry: Bool = false) async throws -> Data {
@@ -126,14 +150,16 @@ class SupabaseManager {
         }
         
         if httpResponse.statusCode == 401 && !isRetry {
-            print("Token expirado (401). Intentando renovar sesión automáticamente...")
+            print("Token expirado (401). Intentando renovar sesión concurrentemente...")
             let success = await refreshSessionToken()
             if success {
-                print("Sesión renovada con éxito. Reintentando la petición original...")
+                print("Sesión renovada. Reintentando la petición original...")
                 return try await makeAuthRequest(path: path, method: method, body: body, isRetry: true)
             } else {
-                print("No se pudo renovar la sesión. Expulsando usuario.")
-                signOut()
+                print("No se pudo renovar la sesión.")
+                if refreshToken == nil || refreshToken?.isEmpty == true {
+                    signOut()
+                }
                 throw URLError(.userAuthenticationRequired)
             }
         }

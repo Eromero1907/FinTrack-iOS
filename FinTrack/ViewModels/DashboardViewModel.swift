@@ -7,12 +7,13 @@ class DashboardViewModel: ObservableObject {
     @Published var totalBalance: Double = 0.0
     @Published var isLoading = false
     
-    // Función para obtener transacciones y cuentas de forma nativa
+    // Función para obtener transacciones, cuentas y TRM oficial de forma nativa
     func fetchTransactions() async {
         isLoading = true
         do {
             async let fetchedTx = SupabaseManager.shared.fetchTransactions()
             async let fetchedAcc = SupabaseManager.shared.fetchAccounts()
+            async let _ = CurrencyRateService.shared.fetchLatestRates()
             
             let (txList, accList) = try await (fetchedTx, fetchedAcc)
             self.transactions = txList
@@ -39,10 +40,13 @@ class DashboardViewModel: ObservableObject {
         }
     }
     
-    // El balance real es el Patrimonio Neto acumulado de todas las cuentas
+    // El balance real es el Patrimonio Neto acumulado de todas las cuentas convertido a COP con TRM oficial
     private func calculateBalance() {
         if !accounts.isEmpty {
-            totalBalance = accounts.reduce(0) { $0 + $1.currentBalance }
+            totalBalance = accounts.reduce(0) { sum, account in
+                let inCop = CurrencyRateService.shared.convertToCOP(amount: account.currentBalance, from: account.currency)
+                return sum + inCop
+            }
         } else {
             // Fallback a transacciones si aún no se han cargado cuentas
             totalBalance = transactions.reduce(0) { (result, transaction) in
@@ -54,6 +58,10 @@ class DashboardViewModel: ObservableObject {
                 return result
             }
         }
+    }
+    
+    var hasForeignCurrency: Bool {
+        accounts.contains(where: { $0.currency != "COP" })
     }
     
     // MARK: - Tarjeta de Crédito Principal y Ciclo de Facturación

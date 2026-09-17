@@ -547,7 +547,7 @@ struct CreateGoalView: View {
         NavigationView {
             Form {
                 Section(header: Text("Nombre de la Meta")) {
-                    TextField("Ej: Viaje a Europa, Nuevo Celular", text: $title)
+                    TextField("Nombre de la meta", text: $title)
                 }
                 
                 Section(header: Text("Montos")) {

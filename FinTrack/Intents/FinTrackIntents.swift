@@ -7,7 +7,7 @@ struct LogTransactionIntent: AppIntent {
     static var title: LocalizedStringResource = "Registrar Transacción en FinTrack"
     static var description = IntentDescription("Registra un gasto, ingreso o pago en tu cuenta de FinTrack.")
     
-    @Parameter(title: "Monto", description: "El valor del movimiento (ej. 25000)")
+    @Parameter(title: "Monto", description: "El valor del movimiento")
     var amount: Double
     
     @Parameter(title: "Tipo", description: "expense (gasto), income (ingreso) o transfer (transferencia/pago)", default: "expense")

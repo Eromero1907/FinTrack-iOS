@@ -3,8 +3,8 @@ import Foundation
 // Modelos de respuesta de Supabase Auth
 struct AuthResponse: Codable {
     let accessToken: String
-    let refreshToken: String // Llave de repuesto
-    let user: SupabaseUser
+    let refreshToken: String?
+    let user: SupabaseUser?
     
     enum CodingKeys: String, CodingKey {
         case accessToken = "access_token"
@@ -15,7 +15,7 @@ struct AuthResponse: Codable {
 
 struct SupabaseUser: Codable {
     let id: String
-    let email: String
+    let email: String?
     let userMetadata: UserMetadata?
     
     enum CodingKeys: String, CodingKey {

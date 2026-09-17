@@ -18,6 +18,17 @@ struct DashboardView: View {
                         Text(viewModel.totalBalance.formattedCurrency())
                             .font(.system(size: 45, weight: .bold, design: .rounded))
                             .foregroundColor(.primary)
+                        
+                        if viewModel.hasForeignCurrency {
+                            HStack(spacing: 4) {
+                                Image(systemName: "globe.americas.fill")
+                                    .font(.caption2)
+                                Text("Incluye TRM oficial ($\(Int(CurrencyRateService.shared.usdToCopRate)) COP/USD)")
+                                    .font(.caption2)
+                            }
+                            .foregroundColor(.blue)
+                            .padding(.top, 2)
+                        }
                     }
                     .padding(.vertical, 30)
                     .frame(maxWidth: .infinity)

@@ -305,6 +305,13 @@ struct AccountCard: View {
                     .bold()
                     .foregroundColor(account.currentBalance >= 0 ? .primary : .red)
                 
+                if account.currency != "COP" {
+                    let inCop = CurrencyRateService.shared.convertToCOP(amount: account.currentBalance, from: account.currency)
+                    Text("≈ \(inCop.formattedCurrency()) COP")
+                        .font(.caption2)
+                        .foregroundColor(.blue)
+                }
+                
                 if account.currentBalance < 0 {
                     Text("Deuda actual")
                         .font(.caption)
@@ -353,19 +360,19 @@ struct AddAccountView: View {
                     Picker("Moneda", selection: $currency) { ForEach(currencies, id: \.self) { Text($0) } }
                     
                     if type == "Banco" {
-                        TextField("Últimos 4 de la Cuenta (ej. 2667)", text: $lastFour)
+                        TextField("Últimos 4 de la cuenta", text: $lastFour)
                             .keyboardType(.numberPad)
                             .onChange(of: lastFour) { _, v in
                                 lastFour = String(v.filter { "0123456789".contains($0) }.prefix(4))
                             }
                         
-                        TextField("Últimos 4 de la Tarjeta Débito (ej. 2131)", text: $lastFourDebit)
+                        TextField("Últimos 4 de la tarjeta débito", text: $lastFourDebit)
                             .keyboardType(.numberPad)
                             .onChange(of: lastFourDebit) { _, v in
                                 lastFourDebit = String(v.filter { "0123456789".contains($0) }.prefix(4))
                             }
                     } else if type == "Tarjeta de Crédito" {
-                        TextField("Últimos 4 dígitos de la tarjeta (ej. 5678)", text: $lastFour)
+                        TextField("Últimos 4 dígitos de la tarjeta", text: $lastFour)
                             .keyboardType(.numberPad)
                             .onChange(of: lastFour) { _, v in
                                 lastFour = String(v.filter { "0123456789".contains($0) }.prefix(4))
@@ -375,13 +382,13 @@ struct AddAccountView: View {
                 
                 if type == "Tarjeta de Crédito" {
                     Section(header: Text("Ciclo de Facturación (Presupuesto)")) {
-                        TextField("Día de corte (ej. 24)", text: $cutoffDayString)
+                        TextField("Día de corte", text: $cutoffDayString)
                             .keyboardType(.numberPad)
                             .onChange(of: cutoffDayString) { _, v in
                                 cutoffDayString = String(v.filter { "0123456789".contains($0) }.prefix(2))
                             }
                         
-                        TextField("Día límite de pago (ej. 14)", text: $paymentDayString)
+                        TextField("Día límite de pago", text: $paymentDayString)
                             .keyboardType(.numberPad)
                             .onChange(of: paymentDayString) { _, v in
                                 paymentDayString = String(v.filter { "0123456789".contains($0) }.prefix(2))
@@ -471,13 +478,13 @@ struct AddAccountView: View {
     var namePlaceholder: String {
         switch type {
         case "Préstamo / Me deben":
-            return "Nombre (ej. Préstamo a Mateo)"
+            return "Nombre del préstamo"
         case "Tarjeta de Crédito":
-            return "Nombre (ej. Tarjeta Nu)"
+            return "Nombre de la tarjeta"
         case "Efectivo":
-            return "Nombre (ej. Billetera física)"
+            return "Nombre de la billetera"
         default:
-            return "Nombre (ej. Bancolombia)"
+            return "Nombre de la cuenta"
         }
     }
     
@@ -507,8 +514,8 @@ struct AddAliasView: View {
                     header: Text("Información del Destinatario"),
                     footer: Text("💡 Cuando te llegue un SMS con este número de cuenta, FinTrack reemplazará los dígitos por el nombre de la persona automáticamente.")
                 ) {
-                    TextField("Nombre del contacto (ej. Mamá, Arriendo)", text: $contactName)
-                    TextField("Últimos 4 dígitos de la cuenta (ej. 8733)", text: $accountNumber)
+                    TextField("Nombre del contacto", text: $contactName)
+                    TextField("Últimos 4 dígitos de la cuenta", text: $accountNumber)
                         .keyboardType(.numberPad)
                         .onChange(of: accountNumber) { _, v in
                             accountNumber = String(v.filter { "0123456789".contains($0) }.prefix(4))

@@ -50,7 +50,7 @@ struct AddTransactionView: View {
                 }
                 
                 if type == "transfer" {
-                    Section(header: Text("Cuentas Involucradas"), footer: Text("💡 El dinero saldrá de la cuenta origen y entrará a la cuenta destino (ej. para pagar la tarjeta Nu desde Bancolombia). El patrimonio total no cambia.")) {
+                    Section(header: Text("Cuentas Involucradas"), footer: Text("💡 El dinero saldrá de la cuenta origen y entrará a la cuenta destino. El patrimonio total no cambia.")) {
                         Picker("De (Origen)", selection: $selectedAccountId) {
                             Text("Selecciona cuenta origen").tag(nil as UUID?)
                             ForEach(accounts) { account in
@@ -67,12 +67,12 @@ struct AddTransactionView: View {
                     }
                     
                     Section(header: Text("Detalles Adicionales")) {
-                        TextField("Nota (opcional, ej. Pago mensual)", text: $description)
+                        TextField("Nota (opcional)", text: $description)
                         DatePicker("Fecha", selection: $date, displayedComponents: .date)
                     }
                 } else {
                     Section(header: Text("Detalles")) {
-                        TextField("Descripción (ej. Almuerzo, Uber)", text: $description)
+                        TextField("Descripción", text: $description)
                         
                         Picker("Categoría", selection: $selectedCategory) {
                             ForEach(categories, id: \.self) { Text($0) }
